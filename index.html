@@ -202,10 +202,9 @@ body{font-family:var(--sans);background:var(--parch);color:var(--ink);min-height
 #s-state{background:var(--parch)}
 .state-intro{font-family:var(--sans);font-size:14px;font-weight:300;color:var(--ash);line-height:1.7;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bone)}
 .search-wrap{position:relative;margin-bottom:14px}
-.search-wrap input{width:100%;padding:14px 16px 14px 44px;background:var(--white);border:1.5px solid var(--bone);border-radius:2px;font-family:var(--sans);font-size:15px;color:var(--ink);outline:none;transition:border-color .15s}
+.search-wrap input{width:100%;padding:14px 16px;background:var(--white);border:1.5px solid var(--bone);border-radius:2px;font-family:var(--sans);font-size:15px;color:var(--ink);outline:none;transition:border-color .15s}
 .search-wrap input:focus{border-color:var(--navy)}
 .search-wrap input::placeholder{color:var(--ash)}
-.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--ash);font-size:15px;pointer-events:none}
 .state-list{display:flex;flex-direction:column;gap:6px}
 .state-item{background:var(--white);border:1.5px solid var(--bone);border-radius:2px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;gap:12px}
 .state-item:hover{border-color:var(--navy);background:var(--navy-lt)}
@@ -495,8 +494,7 @@ body{font-family:var(--sans);background:var(--parch);color:var(--ink);min-height
   <div class="body">
     <div class="state-intro" id="state-intro"></div>
     <div class="search-wrap">
-      <span class="search-icon">Search</span>
-      <input type="text" id="state-search" oninput="filterStates()" autocomplete="off">
+      <input type="search" id="state-search" oninput="filterStates()" autocomplete="off" spellcheck="false">
     </div>
     <div class="state-list" id="state-list"></div>
   </div>
