@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Citizenship Study App</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A1A5C;--crimson:#B8102A;--gold:#C9933A;--gold-lt:#F2DFB0;
+  --parch:#F5F0E8;--bone:#EDE8DE;--ink:#1A1410;--ash:#8C8880;
+  --white:#FDFCFA;--navy-lt:#E8ECF5;--green:#1D6B4A;--green-lt:#E6F2EC;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --page-max:680px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--parch);color:var(--ink);min-height:100vh;-webkit-tap-highlight-color:transparent;overflow-x:hidden;overflow-y:auto}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;min-height:100vh}
+.screen.active{display:flex}
+
+/* HEADER */
+.hdr{background:var(--navy);padding:10px 20px calc(10px + env(safe-area-inset-top,0px));min-height:58px;display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative;flex-wrap:wrap}
+.hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--crimson) 0%,var(--gold) 50%,var(--crimson) 100%)}
+.hdr-title{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--white);line-height:1.15;letter-spacing:.01em}
+.hdr-sub{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(201,147,58,.6);margin-top:3px}
+.hdr-back{background:none;border:none;color:rgba(245,240,232,.6);font-size:20px;cursor:pointer;padding:0;line-height:1;margin-right:4px;font-family:var(--sans);transition:color .15s}
+.hdr-back:hover{color:var(--white)}
+
+/* AUDIO TOGGLE in header */
+.audio-toggle{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.audio-btn{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(201,147,58,.3);
+  border-radius:20px;
+  padding:6px 12px;
+  cursor:pointer;
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(245,240,232,.5);
+  transition:all .2s;
+}
+.audio-btn.enabled{background:rgba(201,147,58,.15);border-color:var(--gold);color:var(--gold)}
+.audio-btn svg{width:13px;height:13px;flex-shrink:0}
+
+/* LANG SWITCH */
+.lang-sw{display:flex;background:rgba(255,255,255,.08);border:1px solid rgba(201,147,58,.2);border-radius:20px;overflow:hidden}
+.lang-sw button{background:none;border:none;color:rgba(245,240,232,.45);padding:5px 10px;font-size:10px;font-weight:500;cursor:pointer;font-family:var(--mono);letter-spacing:.1em;border-radius:20px;transition:all .2s}
+.lang-sw button.on{background:var(--gold);color:var(--ink)}
+
+/* BODY */
+.body{flex:1;overflow:visible;-webkit-overflow-scrolling:auto;padding:24px 20px calc(48px + env(safe-area-inset-bottom,0px));max-width:var(--page-max);margin:0 auto;width:100%}
+
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px 20px;border:none;border-radius:2px;font-family:var(--sans);font-size:15px;font-weight:500;cursor:pointer;transition:filter .15s,transform .1s;letter-spacing:.02em}
+.btn:active{transform:scale(.97)}
+.btn-navy{background:var(--navy);color:var(--parch)}
+.btn-crimson{background:var(--crimson);color:var(--parch)}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--navy)}
+.btn-ghost{background:rgba(255,255,255,.08);color:var(--parch);border:1px solid rgba(245,240,232,.2)}
+.btn-sm{padding:12px 16px;font-size:14px}
+
+/* ── BIG LISTEN BUTTON ──────────────────── */
+/* Used on Krik-Krak, Practice, Flashcard, Exam */
+.listen-card{
+  background:var(--navy);
+  border-radius:2px;
+  padding:18px 20px;
+  display:flex;align-items:center;gap:16px;
+  cursor:pointer;
+  margin-bottom:14px;
+  transition:filter .15s,transform .1s;
+  border:none;width:100%;text-align:left;
+}
+.listen-card:active{transform:scale(.98)}
+.listen-card.playing{background:var(--crimson)}
+.listen-card.disabled-audio{background:#6B6760;cursor:not-allowed;opacity:1}
+.listen-card.disabled-audio .listen-card-label{color:rgba(253,252,250,.72)}
+.listen-card.disabled-audio .listen-card-content{color:var(--white)}
+.listen-card.disabled-audio .listen-card-en{color:rgba(253,252,250,.78)}
+.listen-card.disabled-audio .listen-card-icon{background:rgba(255,255,255,.18)}
+.listen-card-icon{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.listen-card.playing .listen-card-icon{background:rgba(255,255,255,.2)}
+.listen-card-icon svg{width:20px;height:20px;fill:none;stroke:var(--parch);stroke-width:2}
+.listen-card-text{flex:1;min-width:0}
+.listen-card-label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-bottom:4px}
+.listen-card.playing .listen-card-label{color:rgba(245,240,232,.7)}
+.listen-card-content{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--white);line-height:1.35}
+.listen-card-en{font-family:var(--sans);font-size:12px;font-weight:300;font-style:italic;color:rgba(245,240,232,.4);margin-top:4px}
+
+/* WAVE ANIMATION inside listen card */
+.lc-wave{display:flex;align-items:center;gap:3px;height:18px;margin-top:8px;display:none}
+.listen-card.playing .lc-wave{display:flex}
+.listen-card.playing .listen-card-content-wrap{display:none}
+.lc-bar{width:3px;border-radius:2px;background:rgba(255,255,255,.6);animation:lcw .65s ease-in-out infinite alternate}
+.lc-bar:nth-child(2){animation-delay:.09s}
+.lc-bar:nth-child(3){animation-delay:.18s}
+.lc-bar:nth-child(4){animation-delay:.27s}
+.lc-bar:nth-child(5){animation-delay:.18s}
+.lc-bar:nth-child(6){animation-delay:.09s}
+@keyframes lcw{from{height:3px}to{height:16px}}
+
+/* LISTEN PILL — compact version for answer / hook rows */
+.listen-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:transparent;
+  border:1px solid var(--bone);
+  border-radius:20px;
+  padding:7px 14px;
+  cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ash);
+  transition:all .15s;
+}
+.listen-pill:hover{border-color:var(--navy);color:var(--navy)}
+.listen-pill.playing{border-color:var(--gold);color:var(--gold);background:rgba(201,147,58,.06)}
+.listen-pill.disabled-audio{opacity:.4;cursor:not-allowed}
+.listen-pill svg{width:12px;height:12px}
+
+/* AUDIO OFF BANNER — shown when audio disabled */
+.audio-off-note{
+  background:#FDF7ED;
+  border:1px solid rgba(201,147,58,.3);
+  border-radius:2px;
+  padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.audio-off-note.hidden{display:none}
+.aon-icon{font-size:14px;flex-shrink:0}
+.aon-text{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8C5E1A;flex:1}
+.aon-btn{background:var(--gold);color:var(--ink);border:none;border-radius:2px;padding:6px 12px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;white-space:nowrap;font-weight:500}
+
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--bone);border-radius:2px;padding:20px;margin-bottom:14px}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:4px}
+.prog-track{height:3px;background:var(--bone);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s ease}
+.prog-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ash);margin-top:5px;margin-bottom:20px;display:flex;justify-content:space-between}
+
+/* CAT CHIP */
+.cat-chip{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;background:var(--navy-lt);color:var(--navy);border-radius:2px;margin-bottom:10px}
+
+/* QUESTION TEXT */
+.q-main{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy);line-height:1.3;margin-bottom:6px}
+.q-en{font-family:var(--sans);font-size:13px;font-style:italic;font-weight:300;color:var(--ash);margin-bottom:14px}
+
+/* ANSWER CARD */
+.ans-card{background:var(--parch);border:1px solid var(--bone);border-radius:2px;padding:18px;margin-bottom:12px}
+.ans-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.ans-main{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--navy);line-height:1.35;margin-bottom:4px}
+.ans-en{font-family:var(--sans);font-size:12px;font-style:italic;color:var(--ash)}
+
+/* HOOK */
+.hook-box{background:var(--green-lt);border-left:3px solid var(--green);border-radius:0 2px 2px 0;padding:12px 16px;margin-bottom:14px}
+.hook-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:4px}
+.hook-txt{font-family:var(--serif);font-style:italic;font-size:15px;color:#0F4A33;line-height:1.45}
+
+/* ── WELCOME ── */
+#s-welcome{background:var(--navy)}
+#s-welcome .body{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 28px 56px;position:relative}
+#s-welcome .body::before{content:'';position:absolute;top:-60px;right:-60px;width:320px;height:320px;border-radius:50%;border:1px solid rgba(201,147,58,.07);pointer-events:none}
+#s-welcome .body::after{content:'';position:absolute;top:-20px;right:-20px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(201,147,58,.05);pointer-events:none}
+.w-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.w-h1{font-family:var(--serif);font-size:42px;font-weight:900;color:var(--white);line-height:.95;letter-spacing:-.02em;margin-bottom:6px}
+.w-h1 em{font-style:italic;color:var(--gold);display:block}
+.w-tagline{font-family:var(--serif);font-style:italic;font-size:15px;color:rgba(245,240,232,.45);margin-bottom:32px;line-height:1.5}
+.w-rule{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:28px}
+.w-rule-line{flex:1;height:1px;background:rgba(201,147,58,.18)}
+.w-rule-text{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:rgba(201,147,58,.45);text-transform:uppercase;white-space:nowrap}
+.w-actions{width:100%;display:flex;flex-direction:column;gap:10px}
+
+/* WELCOME BIG LISTEN BUTTON */
+.w-listen-btn{
+  width:72px;height:72px;border-radius:50%;
+  background:var(--crimson);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px;transition:transform .15s;
+}
+.w-listen-btn:active{transform:scale(.93)}
+.w-listen-btn.playing{background:#8C0C1E}
+.w-listen-tri{width:0;height:0;border-top:12px solid transparent;border-bottom:12px solid transparent;border-left:19px solid var(--parch);margin-left:4px}
+.w-listen-stop{width:20px;height:20px;background:var(--parch);border-radius:2px;display:none}
+.w-listen-btn.playing .w-listen-tri{display:none}
+.w-listen-btn.playing .w-listen-stop{display:block}
+.w-hint{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(245,240,232,.25);margin-bottom:32px;text-transform:uppercase}
+
+/* ── STATE ── */
+#s-state{background:var(--parch)}
+.state-intro{font-family:var(--sans);font-size:14px;font-weight:300;color:var(--ash);line-height:1.7;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bone)}
+.search-wrap{position:relative;margin-bottom:14px}
+.search-wrap input{width:100%;padding:14px 16px 14px 44px;background:var(--white);border:1.5px solid var(--bone);border-radius:2px;font-family:var(--sans);font-size:15px;color:var(--ink);outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--navy)}
+.search-wrap input::placeholder{color:var(--ash)}
+.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--ash);font-size:15px;pointer-events:none}
+.state-list{display:flex;flex-direction:column;gap:6px}
+.state-item{background:var(--white);border:1.5px solid var(--bone);border-radius:2px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .15s;gap:12px}
+.state-item:hover{border-color:var(--navy);background:var(--navy-lt)}
+.state-item.sel{border-color:var(--gold);background:#FDF7ED}
+.state-nm{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.state-meta{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--ash)}
+.state-check{width:22px;height:22px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;flex-shrink:0}
+.state-check svg{width:11px;height:11px;fill:none;stroke:var(--ink);stroke-width:2.5}
+.state-item.sel .state-check{display:flex}
+
+/* ── MODE ── */
+#s-mode{background:var(--parch)}
+.state-badge{background:var(--navy);border-radius:2px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.badge-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.badge-state{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--white)}
+.badge-sen{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:rgba(201,147,58,.6);margin-top:2px}
+.mode-section-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin-bottom:14px}
+.mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:24px}
+.mode-card{background:var(--white);border:1.5px solid var(--bone);border-radius:2px;padding:22px 14px 18px;text-align:center;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center}
+.mode-card:hover{border-color:var(--navy);transform:translateY(-2px)}
+.mode-card:active{transform:scale(.97)}
+.mode-card.featured{border-color:var(--gold);background:#FDF7ED}
+.mode-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.mode-title{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.mode-sub{font-family:var(--sans);font-size:12px;font-weight:300;color:var(--ash)}
+.krik-explain{background:var(--navy);border-radius:2px;padding:20px}
+.krik-exp-title{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--gold);margin-bottom:8px}
+.krik-exp-body{font-family:var(--sans);font-size:13px;font-weight:300;color:rgba(245,240,232,.65);line-height:1.75}
+.krik-exp-body strong{color:var(--gold-lt);font-weight:500}
+
+/* ── KRIK-KRAK ── */
+#s-krik{background:var(--parch)}
+.krak-zone{background:var(--white);border:1.5px dashed var(--bone);border-radius:20px 20px 4px 20px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.krak-prompt{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ash);flex:1;line-height:1.4}
+.reveal-btn{background:var(--crimson);color:var(--parch);border:none;border-radius:2px;padding:12px 20px;font-family:var(--serif);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:filter .15s,transform .1s;letter-spacing:.01em}
+.reveal-btn:active{transform:scale(.96)}
+.reveal-btn:disabled{opacity:.4;cursor:default}
+.ans-bubble{background:var(--parch);border:1.5px solid var(--bone);border-radius:20px 20px 4px 20px;padding:18px 22px;margin-bottom:12px;display:none}
+.ans-bubble.show{display:block}
+.ans-tag{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.ans-text{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--navy);line-height:1.35}
+.ans-text-en{font-family:var(--sans);font-size:12px;font-style:italic;color:var(--ash);margin-top:5px}
+.grade-row{display:flex;gap:10px;margin-bottom:12px;display:none}
+.grade-row.show{display:flex}
+.grade-btn{flex:1;padding:14px;border:none;border-radius:2px;font-family:var(--serif);font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s;letter-spacing:.01em}
+.grade-btn:active{transform:scale(.97)}
+.g-wrong{background:#F5E8EA;color:var(--crimson)}
+.g-right{background:var(--green-lt);color:var(--green)}
+
+/* ── PRACTICE ── */
+#s-practice{background:var(--parch)}
+.filter-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+.filter-scroll::-webkit-scrollbar{display:none}
+.f-chip{background:var(--white);border:1.5px solid var(--bone);border-radius:20px;padding:6px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;flex-shrink:0;color:var(--ash);transition:all .15s}
+.f-chip.on{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+.prac-q-num{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ash);margin-bottom:8px}
+
+/* ── FLASHCARD ── */
+#s-flash{background:var(--parch)}
+.flash-scene{perspective:1200px;margin-bottom:20px;cursor:pointer;min-height:220px}
+.flash-inner{transition:transform .55s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;position:relative;min-height:220px}
+.flash-inner.flipped{transform:rotateY(180deg)}
+.flash-face{background:var(--white);border:1px solid var(--bone);border-radius:2px;padding:36px 28px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.flash-back{transform:rotateY(180deg);position:absolute;top:0;left:0;right:0;background:var(--navy);border-color:var(--navy)}
+.flash-side{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);margin-bottom:14px}
+.flash-back .flash-side{color:rgba(201,147,58,.6)}
+.flash-q-text{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--navy);line-height:1.35}
+.flash-a-text{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--parch);line-height:1.35}
+.flash-tap{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ash);margin-top:14px;text-transform:uppercase}
+.flash-back .flash-tap{color:rgba(245,240,232,.3)}
+.flash-nav{display:flex;gap:10px;margin-bottom:14px}
+
+/* ── EXAM ── */
+#s-exam{background:var(--parch)}
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.choice{background:var(--white);border:1.5px solid var(--bone);border-radius:2px;padding:15px 18px;cursor:pointer;font-family:var(--serif);font-size:16px;font-weight:700;color:var(--navy);text-align:left;transition:all .15s;width:100%;line-height:1.35;word-break:break-word}
+.choice:hover:not(:disabled){border-color:var(--navy);background:var(--navy-lt)}
+.choice.correct{background:var(--green-lt);border-color:var(--green);color:#0F4A33;cursor:default}
+.choice.wrong{background:#F5E8EA;border-color:var(--crimson);color:var(--crimson);cursor:default}
+.exam-fb{border-radius:2px;padding:14px 18px;margin-top:14px;font-family:var(--serif);font-style:italic;font-size:16px;display:none}
+.exam-fb.show{display:block}
+.fb-ok{background:var(--green-lt);color:#0F4A33}
+.fb-no{background:#F5E8EA;color:var(--crimson)}
+
+/* ── RESULTS ── */
+#s-results{background:var(--navy)}
+#s-results .body{display:flex;flex-direction:column}
+.result-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:28px}
+.result-ring-wrap{text-align:center;margin-bottom:24px}
+.result-ring{width:130px;height:130px;border-radius:50%;border:3px solid var(--gold);display:inline-flex;flex-direction:column;align-items:center;justify-content:center}
+.result-ring.fail{border-color:var(--crimson)}
+.result-score{font-family:var(--serif);font-weight:900;font-size:40px;color:var(--white);line-height:1}
+.result-of{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:rgba(201,147,58,.6);margin-top:2px}
+.result-grade{font-family:var(--serif);font-size:28px;font-weight:900;color:var(--white);text-align:center;margin-bottom:6px;letter-spacing:-.01em}
+.result-msg{font-family:var(--serif);font-style:italic;font-size:16px;color:rgba(245,240,232,.55);text-align:center;margin-bottom:32px;line-height:1.5}
+.weak-card{background:rgba(255,255,255,.06);border:1px solid rgba(201,147,58,.2);border-radius:2px;padding:18px;margin-bottom:24px}
+.weak-title{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.weak-item{font-family:var(--serif);font-size:15px;color:rgba(245,240,232,.7);padding:6px 0;border-bottom:1px solid rgba(201,147,58,.1);display:flex;align-items:center;gap:10px}
+.weak-item:last-child{border:none}
+.weak-item::before{content:'·';color:var(--gold);font-weight:700}
+.miss-item{padding:12px 0;border-bottom:1px solid rgba(201,147,58,.1)}
+.miss-item:last-child{border:none}
+.miss-q{font-family:var(--serif);font-size:15px;color:var(--white);line-height:1.4;margin-bottom:4px}
+.miss-a{font-family:var(--sans);font-size:12px;color:rgba(245,240,232,.72);line-height:1.5}
+.result-rule{height:1px;background:rgba(201,147,58,.15);margin-bottom:20px}
+.result-btns{display:flex;flex-direction:column;gap:10px}
+
+/* ── INSTRUCTIONS ── */
+#s-instructions{background:var(--parch)}
+.inst-stack{display:flex;flex-direction:column;gap:14px}
+.inst-card{background:var(--white);border:1px solid var(--bone);border-radius:2px;padding:18px}
+.inst-title{font-family:var(--serif);font-size:20px;color:var(--navy);margin-bottom:8px}
+.inst-body{font-family:var(--sans);font-size:14px;line-height:1.65;color:var(--ink)}
+.inst-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.inst-item{font-family:var(--sans);font-size:14px;line-height:1.55;color:var(--ink)}
+.inst-item strong{color:var(--navy)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeUp .35s ease both}
+.d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.19s}.d4{animation-delay:.26s}.d5{animation-delay:.33s}
+@keyframes ringPop{0%{transform:scale(0) rotate(-8deg);opacity:0}65%{transform:scale(1.12) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.ring-pop{animation:ringPop .5s cubic-bezier(.34,1.56,.64,1) both}
+
+.nav-pair{display:flex;gap:10px}
+.rule{height:1px;background:var(--bone);margin:16px 0}
+
+@media (max-width: 767px){
+  .hdr{padding-left:16px;padding-right:16px}
+  .body{padding-left:16px;padding-right:16px}
+  .mode-grid{grid-template-columns:1fr}
+  .nav-pair,.flash-nav,.grade-row{flex-direction:column}
+  .krak-zone{align-items:flex-start}
+  .reveal-btn{width:100%}
+  .result-ring{width:118px;height:118px}
+  .result-score{font-size:34px}
+}
+
+@media (max-width: 480px){
+  .hdr{gap:10px}
+  .hdr-title{font-size:15px}
+  .hdr-sub{font-size:8px;letter-spacing:.11em}
+  .lang-sw button{padding:5px 8px;font-size:9px}
+  .audio-btn{padding:6px 10px;font-size:8px}
+  .btn{padding:14px 16px;font-size:14px}
+  .btn-sm{font-size:13px}
+  #s-welcome .body{padding:28px 20px calc(40px + env(safe-area-inset-bottom,0px))}
+  .w-h1{font-size:34px}
+  .w-tagline{font-size:14px;margin-bottom:24px}
+  .w-rule{gap:8px}
+  .w-rule-text{font-size:8px;letter-spacing:.12em;white-space:normal;line-height:1.4}
+  .w-listen-btn{width:64px;height:64px}
+  .w-hint{font-size:9px;margin-bottom:24px}
+  .listen-card{padding:16px;gap:12px}
+  .listen-card-icon{width:42px;height:42px}
+  .listen-card-content{font-size:16px}
+  .listen-card-en{font-size:11px}
+  .listen-pill{font-size:8px;padding:7px 12px}
+  .state-intro,.krik-exp-body{font-size:13px}
+  .state-item{padding:12px 14px}
+  .state-nm,.badge-state{font-size:14px}
+  .mode-card{padding:18px 12px 16px}
+  .mode-title{font-size:15px}
+  .mode-sub{font-size:11px}
+  .krak-zone,.ans-bubble,.ans-card,.hook-box,.weak-card,.card{padding:14px}
+  .inst-card{padding:14px}
+  .krak-prompt,.hook-txt,.result-msg{font-size:14px}
+  .ans-text,.ans-main,.flash-q-text,.flash-a-text{font-size:18px}
+  .grade-btn,.choice,.exam-fb{font-size:15px}
+  .flash-scene,.flash-inner,.flash-face{min-height:190px}
+  .flash-face{padding:28px 20px}
+  .result-grade{font-size:24px}
+  .inst-title{font-size:18px}
+  .inst-body,.inst-item{font-size:13px}
+}
+
+@media (min-width: 768px){
+  :root{--page-max:860px}
+  .body{padding-top:32px;padding-bottom:56px}
+  .hdr{padding-left:24px;padding-right:24px}
+  .mode-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .w-h1{font-size:54px}
+  .flash-scene,.flash-inner,.flash-face{min-height:260px}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ S1 · WELCOME ════════ -->
+<div id="s-welcome" class="screen active">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">US Citizenship Study</div>
+      <div class="hdr-sub">US Citizenship Study</div>
+    </div>
+    <div class="audio-toggle">
+      <div class="lang-sw">
+        <button data-lang-btn data-lang="kr" onclick="setLang('kr')">KR</button>
+        <button data-lang-btn data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="w-eyebrow animate-in d1" id="welcome-eyebrow"></div>
+    <div class="w-h1 animate-in d2" id="welcome-title"></div>
+    <div class="w-tagline animate-in d3" id="welcome-tagline"></div>
+    <div class="w-rule animate-in d3">
+      <div class="w-rule-line"></div>
+      <div class="w-rule-text" id="welcome-rule"></div>
+      <div class="w-rule-line"></div>
+    </div>
+
+    <!-- Welcome listen button -->
+    <button class="w-listen-btn animate-in d4" id="w-listen-btn" onclick="toggleWelcomeAudio()">
+      <div class="w-listen-tri"></div>
+      <div class="w-listen-stop"></div>
+    </button>
+    <div class="w-hint animate-in d4" id="w-hint"></div>
+
+    <div class="w-actions animate-in d5">
+      <button class="btn btn-gold" onclick="go('state')" id="welcome-start"></button>
+      <button class="btn btn-outline" onclick="go('instructions')" id="welcome-how"></button>
+      <button class="btn btn-ghost" onclick="go('mode')" id="welcome-skip"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S2 · INSTRUCTIONS ════════ -->
+<div id="s-instructions" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="go('welcome')">←</button>
+    <div>
+      <div class="hdr-title" id="inst-title"></div>
+      <div class="hdr-sub" id="inst-sub"></div>
+    </div>
+    <div style="margin-left:auto">
+      <div class="lang-sw">
+        <button data-lang-btn data-lang="kr" onclick="setLang('kr')">KR</button>
+        <button data-lang-btn data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="inst-stack">
+      <div class="inst-card">
+        <div class="inst-title" id="inst-overview-title"></div>
+        <div class="inst-body" id="inst-overview-body"></div>
+      </div>
+      <div class="inst-card">
+        <div class="inst-title" id="inst-modes-title"></div>
+        <div class="inst-list">
+          <div class="inst-item" id="inst-mode-1"></div>
+          <div class="inst-item" id="inst-mode-2"></div>
+          <div class="inst-item" id="inst-mode-3"></div>
+          <div class="inst-item" id="inst-mode-4"></div>
+        </div>
+      </div>
+      <div class="inst-card">
+        <div class="inst-title" id="inst-nav-title"></div>
+        <div class="inst-list">
+          <div class="inst-item" id="inst-nav-1"></div>
+          <div class="inst-item" id="inst-nav-2"></div>
+          <div class="inst-item" id="inst-nav-3"></div>
+          <div class="inst-item" id="inst-nav-4"></div>
+        </div>
+      </div>
+      <button class="btn btn-gold" onclick="go('state')" id="inst-start"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S3 · STATE ════════ -->
+<div id="s-state" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="go('welcome')">←</button>
+    <div>
+      <div class="hdr-title" id="state-title"></div>
+      <div class="hdr-sub" id="state-sub"></div>
+    </div>
+    <div style="margin-left:auto">
+      <div class="lang-sw">
+        <button data-lang-btn data-lang="kr" onclick="setLang('kr')">KR</button>
+        <button data-lang-btn data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="state-intro" id="state-intro"></div>
+    <div class="search-wrap">
+      <span class="search-icon">Search</span>
+      <input type="text" id="state-search" oninput="filterStates()" autocomplete="off">
+    </div>
+    <div class="state-list" id="state-list"></div>
+  </div>
+</div>
+
+<!-- ════════ S4 · MODE ════════ -->
+<div id="s-mode" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="go('state')">←</button>
+    <div>
+      <div class="hdr-title" id="mode-title"></div>
+      <div class="hdr-sub" id="mode-sub"></div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <div class="lang-sw">
+        <button data-lang-btn data-lang="kr" onclick="setLang('kr')">KR</button>
+        <button data-lang-btn data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="audio-btn" id="audio-toggle-btn" onclick="toggleAudioEnabled()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <span id="audio-toggle-lbl">Audio Off</span>
+      </button>
+    </div>
+  </div>
+  <div class="body">
+    <div class="state-badge" id="state-badge" style="display:none">
+      <div class="badge-dot"></div>
+      <div>
+        <div class="badge-state" id="badge-state-name"></div>
+        <div class="badge-sen" id="badge-state-sen"></div>
+      </div>
+    </div>
+    <div class="mode-section-lbl" id="mode-section-lbl"></div>
+    <div class="mode-grid">
+      <div class="mode-card featured" onclick="startMode('krik')">
+        <div class="mode-eyebrow" id="mode-krik-eyebrow"></div>
+        <div class="mode-title" id="mode-krik-title"></div>
+        <div class="mode-sub" id="mode-krik-sub"></div>
+      </div>
+      <div class="mode-card" onclick="startMode('practice')">
+        <div class="mode-title" id="mode-practice-title"></div>
+        <div class="mode-sub" id="mode-practice-sub"></div>
+      </div>
+      <div class="mode-card" onclick="startMode('flash')">
+        <div class="mode-title" id="mode-flash-title"></div>
+        <div class="mode-sub" id="mode-flash-sub"></div>
+      </div>
+      <div class="mode-card" onclick="startMode('exam')">
+        <div class="mode-title" id="mode-exam-title"></div>
+        <div class="mode-sub" id="mode-exam-sub"></div>
+      </div>
+    </div>
+    <div class="krik-explain">
+      <div class="krik-exp-title" id="mode-explain-title"></div>
+      <div class="krik-exp-body" id="mode-explain-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S4 · KRIK-KRAK ════════ -->
+<div id="s-krik" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="stopAudio();go('mode')">←</button>
+    <div style="flex:1">
+      <div class="hdr-title">Call and Response</div>
+      <div class="hdr-sub" id="krik-hdr-sub">Question 1 / 100</div>
+    </div>
+    <button class="audio-btn" id="krik-audio-btn" onclick="toggleAudioEnabled()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+  </div>
+  <div class="body">
+    <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" id="krik-bar" style="width:5%"></div></div></div>
+    <div class="prog-lbl"><span id="krik-prog-l"></span><span id="krik-prog-r"></span></div>
+
+    <!-- QUESTION as listen card -->
+    <button class="listen-card" id="krik-listen-btn" onclick="toggleListen('krik-q')">
+      <div class="listen-card-icon">
+        <svg id="krik-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="krik-stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+      </div>
+      <div class="listen-card-text">
+        <div class="listen-card-label">Question · Tap to listen</div>
+        <div class="listen-card-content-wrap">
+          <div class="listen-card-content" id="krik-q-kr"></div>
+          <div class="listen-card-en" id="krik-q-en"></div>
+        </div>
+        <div class="lc-wave">
+          <div class="lc-bar" style="height:5px"></div><div class="lc-bar" style="height:12px"></div>
+          <div class="lc-bar" style="height:16px"></div><div class="lc-bar" style="height:9px"></div>
+          <div class="lc-bar" style="height:14px"></div><div class="lc-bar" style="height:7px"></div>
+        </div>
+      </div>
+    </button>
+
+    <div class="krak-zone">
+      <div class="krak-prompt">Say your answer out loud, then reveal it.</div>
+      <button class="reveal-btn" onclick="revealKrik()" id="reveal-btn">Reveal ✦</button>
+    </div>
+
+    <div class="ans-bubble" id="krik-ans">
+      <div class="ans-tag">Answer</div>
+      <div class="ans-text" id="krik-a-kr"></div>
+      <div class="ans-text-en" id="krik-a-en"></div>
+    </div>
+
+    <!-- Answer listen pill -->
+    <div id="krik-ans-audio-row" style="display:none;margin-bottom:10px">
+      <button class="listen-pill" id="krik-ans-pill" onclick="toggleListen('krik-a')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Listen to answer
+      </button>
+    </div>
+
+    <div class="hook-box" id="krik-hook" style="display:none">
+      <div class="hook-lbl">Memory Cue</div>
+      <div class="hook-txt" id="krik-hook-txt"></div>
+    </div>
+
+    <div class="grade-row" id="krik-grade">
+      <button class="grade-btn g-wrong" onclick="gradeKrik(false)">I missed it</button>
+      <button class="grade-btn g-right"  onclick="gradeKrik(true)">I knew it</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S5 · PRACTICE ════════ -->
+<div id="s-practice" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="stopAudio();go('mode')">←</button>
+    <div style="flex:1">
+      <div class="hdr-title">Practice</div>
+      <div class="hdr-sub" id="prac-hdr-sub">Question 1 / 100</div>
+    </div>
+    <button class="audio-btn" id="prac-audio-btn" onclick="toggleAudioEnabled()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+  </div>
+  <div class="body">
+    <div class="filter-scroll" id="cat-filter"></div>
+    <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" id="prac-bar" style="width:1%"></div></div></div>
+    <div class="prog-lbl"><span id="prac-prog-l"></span><span id="prac-prog-r"></span></div>
+
+    <!-- Question as listen card -->
+    <button class="listen-card" id="prac-listen-btn" onclick="toggleListen('prac-q')">
+      <div class="listen-card-icon">
+        <svg id="prac-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="prac-stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+      </div>
+      <div class="listen-card-text">
+        <div class="listen-card-label">Question · Tap to listen</div>
+        <div class="listen-card-content-wrap">
+          <div class="cat-chip" id="p-cat" style="margin-bottom:6px"></div>
+          <div class="listen-card-content" id="p-q-kr"></div>
+          <div class="listen-card-en" id="p-q-en"></div>
+        </div>
+        <div class="lc-wave">
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+        </div>
+      </div>
+    </button>
+
+    <div class="ans-card">
+      <div class="ans-lbl">Answer</div>
+      <div class="ans-main" id="p-a-kr"></div>
+      <div class="ans-en" id="p-a-en"></div>
+      <div style="margin-top:10px">
+        <button class="listen-pill" id="prac-ans-pill" onclick="toggleListen('prac-a')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Listen to answer
+        </button>
+      </div>
+    </div>
+
+    <div class="hook-box">
+      <div class="hook-lbl">Memory Cue</div>
+      <div class="hook-txt" id="p-hook"></div>
+    </div>
+
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ash);margin-bottom:12px" id="p-num"></div>
+
+    <div class="nav-pair">
+      <button class="btn btn-outline btn-sm" style="flex:1" onclick="navPrac(-1)">← Previous</button>
+      <button class="btn btn-navy btn-sm" style="flex:2" onclick="navPrac(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S6 · FLASHCARD ════════ -->
+<div id="s-flash" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="stopAudio();go('mode')">←</button>
+    <div style="flex:1">
+      <div class="hdr-title">Flashcards</div>
+      <div class="hdr-sub" id="flash-hdr-sub">Card 1 / 100</div>
+    </div>
+    <button class="audio-btn" id="flash-audio-btn" onclick="toggleAudioEnabled()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+  </div>
+  <div class="body">
+    <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" id="flash-bar" style="width:1%"></div></div></div>
+    <div class="prog-lbl"><span id="flash-prog-l"></span><span id="flash-prog-r"></span></div>
+
+    <div class="flash-scene" onclick="flipCard()">
+      <div class="flash-inner" id="flash-inner">
+        <div class="flash-face">
+          <div class="flash-side">Question</div>
+          <div class="flash-q-text" id="fc-q"></div>
+          <div class="flash-tap">Tap to see the answer</div>
+        </div>
+        <div class="flash-face flash-back">
+          <div class="flash-side">Answer</div>
+          <div class="flash-a-text" id="fc-a"></div>
+          <div class="flash-tap">Tap to flip back</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flashcard listen button — below card -->
+    <button class="listen-card" id="flash-listen-btn" onclick="toggleListen('flash')" style="margin-bottom:12px">
+      <div class="listen-card-icon">
+        <svg id="flash-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="flash-stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+      </div>
+      <div class="listen-card-text">
+        <div class="listen-card-label">Tap to hear this card</div>
+        <div class="listen-card-content-wrap">
+          <div class="listen-card-content" id="flash-listen-text">Listen to question</div>
+        </div>
+        <div class="lc-wave">
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+        </div>
+      </div>
+    </button>
+
+    <div class="flash-nav">
+      <button class="btn btn-outline btn-sm" style="flex:1" onclick="navFlash(-1)">← Previous</button>
+      <button class="btn btn-outline btn-sm" style="flex:1" onclick="shuffleFlash()">Shuffle</button>
+      <button class="btn btn-crimson btn-sm" style="flex:1" onclick="navFlash(1)">Next →</button>
+    </div>
+
+    <div class="hook-box">
+      <div class="hook-lbl">Memory Cue</div>
+      <div class="hook-txt" id="fc-hook"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S7 · EXAM ════════ -->
+<div id="s-exam" class="screen">
+  <div class="hdr">
+    <button class="hdr-back" onclick="stopAudio();go('mode')">←</button>
+    <div style="flex:1">
+      <div class="hdr-title">USCIS Exam</div>
+      <div class="hdr-sub" id="exam-hdr-sub">Question 1 / 10</div>
+    </div>
+    <button class="audio-btn" id="exam-audio-btn" onclick="toggleAudioEnabled()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+  </div>
+  <div class="body">
+    <div class="prog-wrap"><div class="prog-track"><div class="prog-fill" id="exam-bar" style="width:10%"></div></div></div>
+    <div class="prog-lbl"><span id="exam-prog-l"></span><span id="exam-prog-r"></span></div>
+
+    <!-- Exam question as listen card -->
+    <button class="listen-card" id="exam-listen-btn" onclick="toggleListen('exam-q')" style="margin-bottom:16px">
+      <div class="listen-card-icon">
+        <svg id="exam-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <svg id="exam-stop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+      </div>
+      <div class="listen-card-text">
+        <div class="listen-card-label">Question · Tap to listen</div>
+        <div class="listen-card-content-wrap">
+          <div class="cat-chip" id="e-cat" style="margin-bottom:6px"></div>
+          <div class="listen-card-content" id="e-q-kr"></div>
+          <div class="listen-card-en" id="e-q-en"></div>
+        </div>
+        <div class="lc-wave">
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+          <div class="lc-bar"></div><div class="lc-bar"></div>
+        </div>
+      </div>
+    </button>
+
+    <div class="choices" id="exam-choices"></div>
+    <div class="exam-fb" id="exam-fb"></div>
+  </div>
+</div>
+
+<!-- ════════ S8 · RESULTS ════════ -->
+<div id="s-results" class="screen">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">Your Results</div>
+      <div class="hdr-sub">US Citizenship Study</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="result-eyebrow">Results</div>
+    <div class="result-ring-wrap">
+      <div class="result-ring ring-pop" id="result-ring">
+        <div class="result-score" id="result-score">0</div>
+        <div class="result-of" id="result-of">/ 10</div>
+      </div>
+    </div>
+    <div class="result-grade" id="result-grade">Excellent!</div>
+    <div class="result-msg" id="result-msg">You are ready for the exam.</div>
+    <div class="result-rule"></div>
+    <div class="weak-card" id="weak-card" style="display:none">
+      <div class="weak-title">Study again</div>
+      <div id="weak-list"></div>
+    </div>
+    <div class="weak-card" id="miss-card" style="display:none">
+      <div class="weak-title" id="miss-title">Review missed questions</div>
+      <div id="miss-list"></div>
+    </div>
+    <div class="result-btns">
+      <button class="btn btn-gold" onclick="go('mode')">Start again</button>
+      <button class="btn btn-ghost" onclick="go('welcome')">Home</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const STATES=[
+  {n:"Alabama",s:"Richard Shelby, Tommy Tuberville",g:"Kay Ivey",c:"Montgomery"},
+  {n:"Alaska",s:"Lisa Murkowski, Dan Sullivan",g:"Mike Dunleavy",c:"Juneau"},
+  {n:"Arizona",s:"Mark Kelly, Ruben Gallego",g:"Katie Hobbs",c:"Phoenix"},
+  {n:"Arkansas",s:"John Boozman, Tom Cotton",g:"Sarah Huckabee Sanders",c:"Little Rock"},
+  {n:"California",s:"Alex Padilla, Adam Schiff",g:"Gavin Newsom",c:"Sacramento"},
+  {n:"Colorado",s:"John Hickenlooper, Michael Bennet",g:"Jared Polis",c:"Denver"},
+  {n:"Connecticut",s:"Richard Blumenthal, Chris Murphy",g:"Ned Lamont",c:"Hartford"},
+  {n:"Delaware",s:"Chris Coons, Lisa Blunt Rochester",g:"Matt Meyer",c:"Dover"},
+  {n:"Florida",s:"Marco Rubio, Rick Scott",g:"Ron DeSantis",c:"Tallahassee"},
+  {n:"Georgia",s:"Jon Ossoff, Raphael Warnock",g:"Brian Kemp",c:"Atlanta"},
+  {n:"Hawaii",s:"Mazie Hirono, Brian Schatz",g:"Josh Green",c:"Honolulu"},
+  {n:"Idaho",s:"Mike Crapo, Jim Risch",g:"Brad Little",c:"Boise"},
+  {n:"Illinois",s:"Dick Durbin, Tammy Duckworth",g:"JB Pritzker",c:"Springfield"},
+  {n:"Indiana",s:"Todd Young, Mike Braun",g:"Mike Braun",c:"Indianapolis"},
+  {n:"Iowa",s:"Chuck Grassley, Joni Ernst",g:"Kim Reynolds",c:"Des Moines"},
+  {n:"Kansas",s:"Jerry Moran, Roger Marshall",g:"Laura Kelly",c:"Topeka"},
+  {n:"Kentucky",s:"Mitch McConnell, Rand Paul",g:"Andy Beshear",c:"Frankfort"},
+  {n:"Louisiana",s:"Bill Cassidy, John Kennedy",g:"Jeff Landry",c:"Baton Rouge"},
+  {n:"Maine",s:"Susan Collins, Angus King",g:"Janet Mills",c:"Augusta"},
+  {n:"Maryland",s:"Ben Cardin, Chris Van Hollen",g:"Wes Moore",c:"Annapolis"},
+  {n:"Massachusetts",s:"Elizabeth Warren, Ed Markey",g:"Maura Healey",c:"Boston"},
+  {n:"Michigan",s:"Debbie Stabenow, Gary Peters",g:"Gretchen Whitmer",c:"Lansing"},
+  {n:"Minnesota",s:"Amy Klobuchar, Tina Smith",g:"Tim Walz",c:"Saint Paul"},
+  {n:"Mississippi",s:"Roger Wicker, Cindy Hyde-Smith",g:"Tate Reeves",c:"Jackson"},
+  {n:"Missouri",s:"Roy Blunt, Josh Hawley",g:"Mike Kehoe",c:"Jefferson City"},
+  {n:"Montana",s:"Jon Tester, Steve Daines",g:"Greg Gianforte",c:"Helena"},
+  {n:"Nebraska",s:"Deb Fischer, Pete Ricketts",g:"Jim Pillen",c:"Lincoln"},
+  {n:"Nevada",s:"Catherine Cortez Masto, Jacky Rosen",g:"Joe Lombardo",c:"Carson City"},
+  {n:"New Hampshire",s:"Jeanne Shaheen, Maggie Hassan",g:"Kelly Ayotte",c:"Concord"},
+  {n:"New Jersey",s:"Cory Booker, Andy Kim",g:"Phil Murphy",c:"Trenton"},
+  {n:"New Mexico",s:"Martin Heinrich, Ben Ray Luján",g:"Michelle Lujan Grisham",c:"Santa Fe"},
+  {n:"New York",s:"Chuck Schumer, Kirsten Gillibrand",g:"Kathy Hochul",c:"Albany"},
+  {n:"North Carolina",s:"Thom Tillis, Ted Budd",g:"Josh Stein",c:"Raleigh"},
+  {n:"North Dakota",s:"John Hoeven, Kevin Cramer",g:"Kelly Armstrong",c:"Bismarck"},
+  {n:"Ohio",s:"Sherrod Brown, JD Vance",g:"Mike DeWine",c:"Columbus"},
+  {n:"Oklahoma",s:"James Lankford, Markwayne Mullin",g:"Kevin Stitt",c:"Oklahoma City"},
+  {n:"Oregon",s:"Ron Wyden, Jeff Merkley",g:"Tina Kotek",c:"Salem"},
+  {n:"Pennsylvania",s:"Bob Casey, John Fetterman",g:"Josh Shapiro",c:"Harrisburg"},
+  {n:"Rhode Island",s:"Jack Reed, Sheldon Whitehouse",g:"Dan McKee",c:"Providence"},
+  {n:"South Carolina",s:"Lindsey Graham, Tim Scott",g:"Henry McMaster",c:"Columbia"},
+  {n:"South Dakota",s:"John Thune, Mike Rounds",g:"Kristi Noem",c:"Pierre"},
+  {n:"Tennessee",s:"Lamar Alexander, Bill Hagerty",g:"Bill Lee",c:"Nashville"},
+  {n:"Texas",s:"John Cornyn, Ted Cruz",g:"Greg Abbott",c:"Austin"},
+  {n:"Utah",s:"Mitt Romney, Mike Lee",g:"Spencer Cox",c:"Salt Lake City"},
+  {n:"Vermont",s:"Patrick Leahy, Peter Welch",g:"Phil Scott",c:"Montpelier"},
+  {n:"Virginia",s:"Mark Warner, Tim Kaine",g:"Glenn Youngkin",c:"Richmond"},
+  {n:"Washington",s:"Patty Murray, Maria Cantwell",g:"Bob Ferguson",c:"Olympia"},
+  {n:"West Virginia",s:"Joe Manchin, Shelley Moore Capito",g:"Patrick Morrisey",c:"Charleston"},
+  {n:"Wisconsin",s:"Ron Johnson, Tammy Baldwin",g:"Tony Evers",c:"Madison"},
+  {n:"Wyoming",s:"John Barrasso, Cynthia Lummis",g:"Mark Gordon",c:"Cheyenne"}
+];
+
+const QS=[
+  {id:1,cat:"Prensip Demokrasi",kr_q:"Ki lwa ki pi wo nan peyi a?",en_q:"What is the supreme law of the land?",kr_a:"Konstitisyon an",en_a:"The Constitution",hook:"Konstitisyon an — lwa pi wo a!"},
+  {id:2,cat:"Prensip Demokrasi",kr_q:"Kisa Konstitisyon an fè?",en_q:"What does the Constitution do?",kr_a:"Li etabli gouvènman an epi pwoteje dwa debaz nou yo",en_a:"Sets up the government and protects basic rights",hook:"Konstitisyon — etabli + pwoteje dwa!"},
+  {id:3,cat:"Prensip Demokrasi",kr_q:"Ki twa premye mo Konstitisyon an?",en_q:"What are the first three words of the Constitution?",kr_a:"Nou Menm Pèp la",en_a:"We the People",hook:"Nou Menm Pèp la — twa premye mo!"},
+  {id:4,cat:"Prensip Demokrasi",kr_q:"Kisa yon amandman ye?",en_q:"What is an amendment?",kr_a:"Yon chanjman nan Konstitisyon an",en_a:"A change to the Constitution",hook:"Amandman = chanjman nan Konstitisyon!"},
+  {id:5,cat:"Prensip Demokrasi",kr_q:"Kijan nou rele dis premye amandman yo?",en_q:"What do we call the first ten amendments?",kr_a:"Bòdwo Dwa yo",en_a:"The Bill of Rights",hook:"Bòdwo Dwa — dis premye amandman!"},
+  {id:6,cat:"Prensip Demokrasi",kr_q:"Ki youn nan dwa nan Premye Amandman an?",en_q:"What is one right from the First Amendment?",kr_a:"Lapawòl, relijyon, rasanbleman, laprès, oswa petisyon",en_a:"Speech, religion, assembly, press, or petition",hook:"Premye Amandman: lapawòl, relijyon, rasanbleman!"},
+  {id:7,cat:"Prensip Demokrasi",kr_q:"Konbyen amandman Konstitisyon an genyen?",en_q:"How many amendments does the Constitution have?",kr_a:"Vennset — 27",en_a:"Twenty-seven — 27",hook:"Vennset — 27 amandman!"},
+  {id:8,cat:"Prensip Demokrasi",kr_q:"Kisa Deklarasyon Endepandans lan fè?",en_q:"What did the Declaration of Independence do?",kr_a:"Li anonse endepandans nou depi Grann Bretay",en_a:"Announced independence from Great Britain",hook:"Deklarasyon — lib anba Grann Bretay!"},
+  {id:9,cat:"Prensip Demokrasi",kr_q:"Ki de dwa ki nan Deklarasyon Endepandans lan?",en_q:"What are two rights in the Declaration of Independence?",kr_a:"Lavi, libète, chache bonè",en_a:"Life, liberty, pursuit of happiness",hook:"Lavi — Libète — Chache Bonè!"},
+  {id:10,cat:"Prensip Demokrasi",kr_q:"Kisa libète relijyon ye?",en_q:"What is freedom of religion?",kr_a:"Ou ka pratike nenpòt relijyon, oswa okenn relijyon",en_a:"You can practice any religion, or no religion",hook:"Libète relijyon — ou chwazi!"},
+  {id:11,cat:"Prensip Demokrasi",kr_q:"Ki sistèm ekonomik ki nan Etazini?",en_q:"What is the economic system in the United States?",kr_a:"Ekonomi kapitalis oswa mache lib",en_a:"Capitalist economy or market economy",hook:"Kapitalis — mache lib!"},
+  {id:12,cat:"Prensip Demokrasi",kr_q:"Kisa règ lwa ye?",en_q:"What is the rule of law?",kr_a:"Pesonn pa pi wo pase lwa — menm Prezidan an",en_a:"No one is above the law — not even the President",hook:"Règ lwa — pesonn pa pi wo!"},
+  {id:13,cat:"Sistèm Gouvènman",kr_q:"Nonmen yon branch nan gouvènman an.",en_q:"Name one branch of the government.",kr_a:"Kongre (lejislatif), Prezidan (egzekitif), Tribinal (jidisyè)",en_a:"Congress (legislative), President (executive), Courts (judicial)",hook:"Twa branch — Kongre, Prezidan, Tribinal!"},
+  {id:14,cat:"Sistèm Gouvènman",kr_q:"Kisa ki anpeche yon branch vin twò pwisan?",en_q:"What stops one branch from becoming too powerful?",kr_a:"Ekilibi ak kontwòl; separasyon pouvwa",en_a:"Checks and balances; separation of powers",hook:"Ekilibi ak kontwòl — youn veye lòt!"},
+  {id:15,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki responsab branch egzekitif la?",en_q:"Who is in charge of the executive branch?",kr_a:"Prezidan an",en_a:"The President",hook:"Prezidan — chèf egzekitif!"},
+  {id:16,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki fè lwa federal yo?",en_q:"Who makes federal laws?",kr_a:"Kongre a",en_a:"Congress",hook:"Kongre fè lwa federal!"},
+  {id:17,cat:"Sistèm Gouvènman",kr_q:"Ki de pati nan Kongre Ameriken an?",en_q:"What are the two parts of Congress?",kr_a:"Sena a ak Chanm Reprezantan yo",en_a:"The Senate and House of Representatives",hook:"Sena + Chanm Reprezantan = Kongre!"},
+  {id:18,cat:"Sistèm Gouvènman",kr_q:"Konbyen Senatè Ameriken ki genyen?",en_q:"How many U.S. Senators are there?",kr_a:"San — 100",en_a:"One hundred — 100",hook:"San senatè — 100!"},
+  {id:19,cat:"Sistèm Gouvènman",kr_q:"Nou eli yon Senatè pou konbyen ane?",en_q:"We elect a Senator for how many years?",kr_a:"Sis ane",en_a:"Six years",hook:"Senatè — sis ane!"},
+  {id:20,cat:"Sistèm Gouvènman",kr_q:"Ki youn nan Senatè eta ou yo kounye a?",en_q:"Who is one of your state's U.S. Senators now?",kr_a:"[SENATÈ ETA OU]",en_a:"[YOUR STATE SENATORS]",hook:"Konnen Senatè eta ou!",ss:true,sf:"s"},
+  {id:21,cat:"Sistèm Gouvènman",kr_q:"Chanm Reprezantan an gen konbyen manm votant?",en_q:"The House of Representatives has how many voting members?",kr_a:"Katrsan trannsek — 435",en_a:"Four hundred thirty-five — 435",hook:"435 nan Chanm Reprezantan!"},
+  {id:22,cat:"Sistèm Gouvènman",kr_q:"Nou eli yon Reprezantan pou konbyen ane?",en_q:"We elect a U.S. Representative for how many years?",kr_a:"De ane",en_a:"Two years",hook:"Reprezantan — de ane!"},
+  {id:23,cat:"Sistèm Gouvènman",kr_q:"Nonmen Reprezantan Ameriken ou.",en_q:"Name your U.S. Representative.",kr_a:"Chèche sou congress.gov pou distrik ou a",en_a:"Find yours at congress.gov for your district",hook:"Konnen Reprezantan distrik ou!"},
+  {id:24,cat:"Sistèm Gouvènman",kr_q:"Ki moun yon Senatè reprezante?",en_q:"Who does a U.S. Senator represent?",kr_a:"Tout moun nan eta a",en_a:"All people of the state",hook:"Senatè — tout moun nan eta!"},
+  {id:25,cat:"Sistèm Gouvènman",kr_q:"Poukisa kèk eta gen plis Reprezantan?",en_q:"Why do some states have more Representatives?",kr_a:"Akòz popilasyon eta a — plis moun, plis Reprezantan",en_a:"Because of the state's population",hook:"Plis moun = plis Reprezantan!"},
+  {id:26,cat:"Sistèm Gouvènman",kr_q:"Nou eli yon Prezidan pou konbyen ane?",en_q:"We elect a President for how many years?",kr_a:"Kat ane",en_a:"Four years",hook:"Prezidan — kat ane!"},
+  {id:27,cat:"Sistèm Gouvènman",kr_q:"Ki mwa nou vote pou Prezidan?",en_q:"In what month do we vote for President?",kr_a:"Novanm",en_a:"November",hook:"Novanm — vote pou Prezidan!"},
+  {id:28,cat:"Sistèm Gouvènman",kr_q:"Ki non Prezidan Etazini kounye a?",en_q:"What is the name of the President now?",kr_a:"Donald Trump",en_a:"Donald Trump",hook:"Donald Trump — Prezidan kounye a!"},
+  {id:29,cat:"Sistèm Gouvènman",kr_q:"Ki non Vis-Prezidan kounye a?",en_q:"What is the name of the Vice President now?",kr_a:"JD Vance",en_a:"JD Vance",hook:"JD Vance — Vis-Prezidan kounye a!"},
+  {id:30,cat:"Sistèm Gouvènman",kr_q:"Si Prezidan an pa ka sèvi, ki moun vin Prezidan?",en_q:"If the President can no longer serve, who becomes President?",kr_a:"Vis-Prezidan an",en_a:"The Vice President",hook:"Vis-Prezidan — dezyèm nan liy!"},
+  {id:31,cat:"Sistèm Gouvènman",kr_q:"Si ni Prezidan ni VP pa ka sèvi, ki moun vin Prezidan?",en_q:"If both President and VP can't serve, who becomes President?",kr_a:"Prezidan Chanm Reprezantan an",en_a:"The Speaker of the House",hook:"Prezidan Chanm — twazyèm nan liy!"},
+  {id:32,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki Kòmandan Anchèf militè a?",en_q:"Who is the Commander in Chief of the military?",kr_a:"Prezidan an",en_a:"The President",hook:"Prezidan — Kòmandan Anchèf!"},
+  {id:33,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki siyen bòdwo pou yo vin lwa?",en_q:"Who signs bills to become laws?",kr_a:"Prezidan an",en_a:"The President",hook:"Prezidan siyen bòdwo!"},
+  {id:34,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki veto bòdwo yo?",en_q:"Who vetoes bills?",kr_a:"Prezidan an",en_a:"The President",hook:"Prezidan ka veto bòdwo!"},
+  {id:35,cat:"Sistèm Gouvènman",kr_q:"Kisa Kabinè Prezidan an fè?",en_q:"What does the President's Cabinet do?",kr_a:"Li konseye Prezidan an",en_a:"Advises the President",hook:"Kabinè konseye Prezidan!"},
+  {id:36,cat:"Sistèm Gouvènman",kr_q:"Ki de pozisyon nan nivo Kabinè?",en_q:"What are two Cabinet-level positions?",kr_a:"Sekretè Deta, Sekretè Defans, Vis-Prezidan, Prokuè Jeneral",en_a:"Secretary of State, Defense, Vice President, Attorney General",hook:"Kabinè: Defans, Deta, Trezò!"},
+  {id:37,cat:"Sistèm Gouvènman",kr_q:"Kisa branch jidisyè a fè?",en_q:"What does the judicial branch do?",kr_a:"Li revize lwa epi rezoud konfli",en_a:"Reviews laws and resolves disputes",hook:"Jidisyè — revize lwa, rezoud konfli!"},
+  {id:38,cat:"Sistèm Gouvènman",kr_q:"Ki pi wo tribinal nan Etazini?",en_q:"What is the highest court in the United States?",kr_a:"Tribinal Siprèm nan",en_a:"The Supreme Court",hook:"Tribinal Siprèm — pi wo tribinal!"},
+  {id:39,cat:"Sistèm Gouvènman",kr_q:"Konbyen jij sou Tribinal Siprèm nan?",en_q:"How many justices are on the Supreme Court?",kr_a:"Nèf — 9",en_a:"Nine — 9",hook:"Nèf jij sou Tribinal Siprèm!"},
+  {id:40,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki Jij Anchèf kounye a?",en_q:"Who is the Chief Justice now?",kr_a:"John Roberts",en_a:"John Roberts",hook:"John Roberts — Jij Anchèf!"},
+  {id:41,cat:"Sistèm Gouvènman",kr_q:"Ki youn nan pouvwa gouvènman federal la?",en_q:"What is one power of the federal government?",kr_a:"Enprime lajan, deklare lagè, kreye lame, fè trete",en_a:"Print money, declare war, create an army, make treaties",hook:"Federal: lajan, lagè, lame, trete!"},
+  {id:42,cat:"Sistèm Gouvènman",kr_q:"Ki youn nan pouvwa eta yo?",en_q:"What is one power of the states?",kr_a:"Bay edikasyon, bay lapolis, bay lisans chofè",en_a:"Provide schooling, provide police, give driver's licenses",hook:"Eta: lekòl, lapolis, lisans!"},
+  {id:43,cat:"Sistèm Gouvènman",kr_q:"Ki moun ki Gouvènè eta ou kounye a?",en_q:"Who is the Governor of your state now?",kr_a:"[GOUVÈNÈ ETA OU]",en_a:"[YOUR STATE GOVERNOR]",hook:"Konnen Gouvènè eta ou!",ss:true,sf:"g"},
+  {id:44,cat:"Sistèm Gouvènman",kr_q:"Ki kapital eta ou?",en_q:"What is the capital of your state?",kr_a:"[KAPITAL ETA OU]",en_a:"[YOUR STATE CAPITAL]",hook:"Konnen kapital eta ou!",ss:true,sf:"c"},
+  {id:45,cat:"Sistèm Gouvènman",kr_q:"Ki de gwo pati politik nan Etazini?",en_q:"What are the two major political parties?",kr_a:"Demokrat ak Repibliken",en_a:"Democratic and Republican",hook:"Demokrat ak Repibliken — de gwo pati!"},
+  {id:46,cat:"Sistèm Gouvènman",kr_q:"Ki pati politik Prezidan an kounye a?",en_q:"What is the political party of the President now?",kr_a:"Repibliken",en_a:"Republican",hook:"Prezidan Trump — Repibliken!"},
+  {id:47,cat:"Sistèm Gouvènman",kr_q:"Ki non Prezidan Chanm Reprezantan an kounye a?",en_q:"Who is the Speaker of the House now?",kr_a:"Mike Johnson",en_a:"Mike Johnson",hook:"Mike Johnson — Prezidan Chanm!"},
+  {id:48,cat:"Dwa ak Responsablite",kr_q:"Dekri youn nan kat amandman sou dwa vote.",en_q:"Describe one amendment about who can vote.",kr_a:"Sitwayen 18 an+ ka vote; gratis; fanm gen dwa vote",en_a:"Citizens 18+ can vote; free to vote; women have the right to vote",hook:"Dizwit an, gratis, nenpòt sitwayen — vote!"},
+  {id:49,cat:"Dwa ak Responsablite",kr_q:"Ki youn nan responsablite rezève pou sitwayen?",en_q:"What is one responsibility only for citizens?",kr_a:"Sèvi nan jiri; vote nan eleksyon federal",en_a:"Serve on a jury; vote in a federal election",hook:"Jiri ak vote federal — pou sitwayen!"},
+  {id:50,cat:"Dwa ak Responsablite",kr_q:"Nonmen yon dwa rezève pou sitwayen Etazini.",en_q:"Name one right only for United States citizens.",kr_a:"Vote federal; kandida pou pòs federal",en_a:"Vote in federal election; run for federal office",hook:"Vote federal — dwa sitwayen sèlman!"},
+  {id:51,cat:"Dwa ak Responsablite",kr_q:"Ki de dwa tout moun k ap viv Etazini genyen?",en_q:"What are two rights of everyone in the United States?",kr_a:"Libète lapawòl, relijyon, rasanbleman, laprès, pote zam",en_a:"Freedom of speech, religion, assembly, press, right to bear arms",hook:"Lapawòl, relijyon, rasanbleman — dwa tout moun!"},
+  {id:52,cat:"Dwa ak Responsablite",kr_q:"Nou montre fidelite a ki sa lè nou di Sèman Fidelite a?",en_q:"What do we show loyalty to in the Pledge of Allegiance?",kr_a:"Etazini ak drapo a",en_a:"The United States and the flag",hook:"Sèman Fidelite — pou drapo ak peyi!"},
+  {id:53,cat:"Dwa ak Responsablite",kr_q:"Ki youn nan pwomès ou fè lè ou vin sitwayen?",en_q:"What is one promise you make when you become a citizen?",kr_a:"Abandone fidelite lòt peyi; defann Konstitisyon; obeyi lwa",en_a:"Give up loyalty to other countries; defend the Constitution; obey the laws",hook:"Fidèl a Etazini, defann Konstitisyon, obeyi lwa!"},
+  {id:54,cat:"Dwa ak Responsablite",kr_q:"Ki laj sitwayen dwe genyen pou vote pou Prezidan?",en_q:"How old do citizens have to be to vote for President?",kr_a:"Dizwit an ak plis",en_a:"Eighteen and older",hook:"Dizwit an — ou ka vote!"},
+  {id:55,cat:"Dwa ak Responsablite",kr_q:"Ki de fason Ameriken ka patisipe nan demokrasi?",en_q:"What are two ways Americans can participate in democracy?",kr_a:"Vote, rantre nan pati politik, kandida pou pòs, rele Senatè",en_a:"Vote, join a political party, run for office, call Senators",hook:"Vote, patisipe, pale — fason aji nan demokrasi!"},
+  {id:56,cat:"Dwa ak Responsablite",kr_q:"Ki dènye jou pou voye fòm taks federal yo?",en_q:"When is the last day to send in federal income tax forms?",kr_a:"Kenz Avril",en_a:"April 15",hook:"Kenz Avril — dènye jou pou taks!"},
+  {id:57,cat:"Dwa ak Responsablite",kr_q:"Ki lè tout gason dwe anrejistre pou Sèvis Selektif?",en_q:"When must men register for the Selective Service?",kr_a:"Nan laj 18 an, oswa ant 18 ak 26 an",en_a:"At age 18, or between 18 and 26",hook:"Gason 18–26 an — anrejistre Sèvis Selektif!"},
+  {id:58,cat:"Istwa Kolonyal",kr_q:"Ki youn nan rezon kolonizatè yo te vini Amerik?",en_q:"What is one reason colonists came to America?",kr_a:"Libète, libète relijyon, opòtinite ekonomik",en_a:"Freedom, religious freedom, economic opportunity",hook:"Libète, relijyon, opòtinite — rezon kolonizatè!"},
+  {id:59,cat:"Istwa Kolonyal",kr_q:"Ki moun ki te viv Amerik anvan Ewopeyen yo rive?",en_q:"Who lived in America before the Europeans arrived?",kr_a:"Amerendyen, Natif Natal Ameriken",en_a:"American Indians, Native Americans",hook:"Amerendyen — yo te la anvan Ewopeyen!"},
+  {id:60,cat:"Istwa Kolonyal",kr_q:"Ki gwoup yo te mennen Amerik yo vann kòm esklav?",en_q:"What group was taken to America and sold as slaves?",kr_a:"Afriken, moun ki soti Afrik",en_a:"Africans, people from Africa",hook:"Afriken — yo te mennen fòs yo vann esklav!"},
+  {id:61,cat:"Istwa Kolonyal",kr_q:"Poukisa kolonizatè yo te goumen kont Britanik yo?",en_q:"Why did colonists fight the British?",kr_a:"Taks wo, solda nan kay yo, pa gen gouvènman tèt-yo",en_a:"High taxes, soldiers in their houses, no self-government",hook:"Taks wo + solda = lagè kont Britanik!"},
+  {id:62,cat:"Istwa Kolonyal",kr_q:"Ki moun ki ekri Deklarasyon Endepandans lan?",en_q:"Who wrote the Declaration of Independence?",kr_a:"Thomas Jefferson",en_a:"Thomas Jefferson",hook:"Thomas Jefferson ekri Deklarasyon!"},
+  {id:63,cat:"Istwa Kolonyal",kr_q:"Ki lè Deklarasyon Endepandans lan te adopte?",en_q:"When was the Declaration of Independence adopted?",kr_a:"Kat Jiyè 1776",en_a:"July 4, 1776",hook:"Kat Jiyè 1776 — Endepandans!"},
+  {id:64,cat:"Istwa Kolonyal",kr_q:"Te gen 13 eta orijinal. Nonmen twa.",en_q:"There were 13 original states. Name three.",kr_a:"New York, Virginia, Jòji, Massachusetts, ak lòt yo",en_a:"New York, Virginia, Georgia, Massachusetts, and others",hook:"Trèz koloni — New York, Virginia, Jòji!"},
+  {id:65,cat:"Istwa Kolonyal",kr_q:"Kisa ki te pase nan Konvansyon Konstitisyonèl la?",en_q:"What happened at the Constitutional Convention?",kr_a:"Konstitisyon an te ekri",en_a:"The Constitution was written",hook:"Konvansyon — yo ekri Konstitisyon!"},
+  {id:66,cat:"Istwa Kolonyal",kr_q:"Ki lè Konstitisyon an te ekri?",en_q:"When was the Constitution written?",kr_a:"Mil sèt san katrevennsèt — 1787",en_a:"1787",hook:"1787 — Konstitisyon ekri!"},
+  {id:67,cat:"Istwa Kolonyal",kr_q:"Nonmen youn nan otè Dokiman Federalis yo.",en_q:"Name one writer of the Federalist Papers.",kr_a:"James Madison, Alexander Hamilton, John Jay",en_a:"James Madison, Alexander Hamilton, John Jay",hook:"Madison, Hamilton, Jay — Dokiman Federalis!"},
+  {id:68,cat:"Istwa Kolonyal",kr_q:"Ki youn nan bagay Benjamin Franklin famen pou li?",en_q:"What is one thing Benjamin Franklin is famous for?",kr_a:"Diplomat, dekouvri elektrisite, kòmanse bibliyotèk gratis",en_a:"Diplomat, discovered electricity, started free libraries",hook:"Franklin — diplomat, envantè, fondatè!"},
+  {id:69,cat:"Istwa Kolonyal",kr_q:"Ki moun ki Pè Peyi Nou an?",en_q:"Who is the Father of Our Country?",kr_a:"George Washington",en_a:"George Washington",hook:"George Washington — Pè Peyi Nou!"},
+  {id:70,cat:"Istwa Kolonyal",kr_q:"Ki moun ki te premye Prezidan?",en_q:"Who was the first President?",kr_a:"George Washington",en_a:"George Washington",hook:"George Washington — premye Prezidan!"},
+  {id:71,cat:"Istwa 1800 yo",kr_q:"Ki teritwa Etazini te achte nan Lafrans an 1803?",en_q:"What territory did the U.S. buy from France in 1803?",kr_a:"Teritwa Lwizyana",en_a:"The Louisiana Territory",hook:"Lwizyana — achte nan Lafrans 1803!"},
+  {id:72,cat:"Istwa 1800 yo",kr_q:"Nonmen yon lagè Etazini te goumen nan ane 1800 yo.",en_q:"Name one war fought in the 1800s.",kr_a:"Lagè 1812, Lagè Meksiken-Ameriken, Lagè Sivil, Lagè Espanyòl-Ameriken",en_a:"War of 1812, Mexican-American War, Civil War, Spanish-American War",hook:"Lagè Sivil — pi gwo lagè 1800 yo!"},
+  {id:73,cat:"Istwa 1800 yo",kr_q:"Nonmen lagè Ameriken ant Nò a ak Sid la.",en_q:"Name the U.S. war between the North and the South.",kr_a:"Lagè Sivil la",en_a:"The Civil War",hook:"Lagè Sivil — Nò kont Sid!"},
+  {id:74,cat:"Istwa 1800 yo",kr_q:"Nonmen yon pwoblèm ki te mennen nan Lagè Sivil la.",en_q:"Name one problem that led to the Civil War.",kr_a:"Esklavaj, rezon ekonomik, dwa eta yo",en_a:"Slavery, economic reasons, states' rights",hook:"Esklavaj — mennen nan Lagè Sivil!"},
+  {id:75,cat:"Istwa 1800 yo",kr_q:"Ki youn nan bagay enpòtan Abraham Lincoln te fè?",en_q:"What was one important thing Abraham Lincoln did?",kr_a:"Li libere esklav yo epi sove inyon an",en_a:"Freed the slaves and saved the Union",hook:"Lincoln — libere esklav, sove inyon!"},
+  {id:76,cat:"Istwa 1800 yo",kr_q:"Kisa Proklamasyon Emansipasyon an te fè?",en_q:"What did the Emancipation Proclamation do?",kr_a:"Li libere esklav yo nan eta Konfedere yo",en_a:"Freed the slaves in the Confederate states",hook:"Proklamasyon Emansipasyon — Lincoln libere esklav!"},
+  {id:77,cat:"Istwa 1800 yo",kr_q:"Kisa Susan B. Anthony te fè?",en_q:"What did Susan B. Anthony do?",kr_a:"Li te goumen pou dwa fanm ak dwa sivil",en_a:"Fought for women's rights and civil rights",hook:"Susan B. Anthony — goumen pou dwa fanm!"},
+  {id:78,cat:"Istwa Resan",kr_q:"Nonmen yon lagè Etazini te goumen nan ane 1900 yo.",en_q:"Name one war fought in the 1900s.",kr_a:"Premye Gè Mondyal, Dezyèm Gè Mondyal, Kore, Vyetnam, Gòlf Pèsik",en_a:"World War I, World War II, Korean War, Vietnam War, Gulf War",hook:"Premye ak Dezyèm Gè Mondyal — 1900 yo!"},
+  {id:79,cat:"Istwa Resan",kr_q:"Ki moun ki te Prezidan pandan Premye Gè Mondyal la?",en_q:"Who was President during World War I?",kr_a:"Woodrow Wilson",en_a:"Woodrow Wilson",hook:"Woodrow Wilson — Prezidan Premye Gè!"},
+  {id:80,cat:"Istwa Resan",kr_q:"Ki moun ki te Prezidan pandan Gran Depresyon an ak Dezyèm Gè Mondyal?",en_q:"Who was President during the Great Depression and World War II?",kr_a:"Franklin Roosevelt — FDR",en_a:"Franklin Roosevelt — FDR",hook:"FDR — Depresyon ak Dezyèm Gè!"},
+  {id:81,cat:"Istwa Resan",kr_q:"Kont ki moun Etazini te goumen nan Dezyèm Gè Mondyal?",en_q:"Who did the U.S. fight in World War II?",kr_a:"Japon, Almay, ak Itali",en_a:"Japan, Germany, and Italy",hook:"Japon, Almay, Itali — enmi Dezyèm Gè!"},
+  {id:82,cat:"Istwa Resan",kr_q:"Eisenhower te yon jeneral. Ki lagè li te nan li?",en_q:"Eisenhower was a general. What war was he in?",kr_a:"Dezyèm Gè Mondyal",en_a:"World War II",hook:"Eisenhower — Jeneral Dezyèm Gè, epi Prezidan!"},
+  {id:83,cat:"Istwa Resan",kr_q:"Pandan Lagè Frèt la, kisa ki te prensipal enkyetid Etazini?",en_q:"During the Cold War, what was the main concern of the U.S.?",kr_a:"Kominis",en_a:"Communism",hook:"Lagè Frèt — enkyetid sou Kominis!"},
+  {id:84,cat:"Istwa Resan",kr_q:"Ki mouvman ki te eseye mete fen nan diskriminasyon rasyal?",en_q:"What movement tried to end racial discrimination?",kr_a:"Mouvman dwa sivil la",en_a:"The civil rights movement",hook:"Mouvman dwa sivil — kont diskriminasyon!"},
+  {id:85,cat:"Istwa Resan",kr_q:"Kisa Martin Luther King Jr. te fè?",en_q:"What did Martin Luther King Jr. do?",kr_a:"Li te goumen pou dwa sivil ak egalite pou tout Ameriken",en_a:"Fought for civil rights and equality for all Americans",hook:"MLK — goumen pou egalite ak dwa sivil!"},
+  {id:86,cat:"Istwa Resan",kr_q:"Ki evènman majè ki te rive nan dat 11 Septanm 2001?",en_q:"What major event happened on September 11, 2001?",kr_a:"Terroris te atake Etazini",en_a:"Terrorists attacked the United States",hook:"Onz Septanm 2001 — atatk terroris!"},
+  {id:87,cat:"Istwa Resan",kr_q:"Nonmen yon tribi Amerendyen nan Etazini.",en_q:"Name one American Indian tribe in the United States.",kr_a:"Cherokee, Navajo, Sioux, Apache, Iroquois",en_a:"Cherokee, Navajo, Sioux, Apache, Iroquois",hook:"Cherokee, Navajo, Sioux — tribi Amerendyen!"},
+  {id:88,cat:"Jewografi",kr_q:"Nonmen youn nan de rivyè ki pi long nan Etazini.",en_q:"Name one of the two longest rivers in the United States.",kr_a:"Rivyè Missouri oswa Rivyè Mississippi",en_a:"Missouri River or Mississippi River",hook:"Mississippi ak Missouri — de rivyè pi long!"},
+  {id:89,cat:"Jewografi",kr_q:"Ki oseyan ki sou Kòt Lwès Etazini?",en_q:"What ocean is on the West Coast?",kr_a:"Oseyan Pasifik",en_a:"Pacific Ocean",hook:"Pasifik — Kòt Lwès!"},
+  {id:90,cat:"Jewografi",kr_q:"Ki oseyan ki sou Kòt Lès Etazini?",en_q:"What ocean is on the East Coast?",kr_a:"Oseyan Atlantik",en_a:"Atlantic Ocean",hook:"Atlantik — Kòt Lès!"},
+  {id:91,cat:"Jewografi",kr_q:"Nonmen yon teritwa Ameriken.",en_q:"Name one U.S. territory.",kr_a:"Pòtoriko, Zile Vyèj Ameriken, Gwam, Samoa Ameriken",en_a:"Puerto Rico, U.S. Virgin Islands, Guam, American Samoa",hook:"Pòtoriko, Gwam, Samoa — teritwa Ameriken!"},
+  {id:92,cat:"Jewografi",kr_q:"Nonmen yon eta ki bòde Kanada.",en_q:"Name one state that borders Canada.",kr_a:"Alaska, Maine, Michigan, Minnesota, New York",en_a:"Alaska, Maine, Michigan, Minnesota, New York",hook:"Alaska, Michigan, New York — bòde Kanada!"},
+  {id:93,cat:"Jewografi",kr_q:"Nonmen yon eta ki bòde Meksik.",en_q:"Name one state that borders Mexico.",kr_a:"Teksas, Arizona, Nouveau-Meksik, Kalifòni",en_a:"Texas, Arizona, New Mexico, California",hook:"Teksas, Arizona, Kalifòni — bòde Meksik!"},
+  {id:94,cat:"Jewografi",kr_q:"Ki kapital Etazini?",en_q:"What is the capital of the United States?",kr_a:"Washington, D.C.",en_a:"Washington, D.C.",hook:"Washington D.C. — kapital Etazini!"},
+  {id:95,cat:"Jewografi",kr_q:"Kote Estati Libète a ye?",en_q:"Where is the Statue of Liberty?",kr_a:"Pò New York, Zile Libète",en_a:"New York Harbor, Liberty Island",hook:"Estati Libète — nan Pò New York!"},
+  {id:96,cat:"Senbòl",kr_q:"Poukisa drapo a gen 13 rèy?",en_q:"Why does the flag have 13 stripes?",kr_a:"Paske te gen 13 koloni orijinal",en_a:"Because there were 13 original colonies",hook:"Trèz rèy — trèz koloni orijinal!"},
+  {id:97,cat:"Senbòl",kr_q:"Poukisa drapo a gen 50 zetwal?",en_q:"Why does the flag have 50 stars?",kr_a:"Paske gen 50 eta",en_a:"Because there are 50 states",hook:"Senkant zetwal — senkant eta!"},
+  {id:98,cat:"Senbòl",kr_q:"Ki non chan nasyonal la?",en_q:"What is the name of the national anthem?",kr_a:"The Star-Spangled Banner",en_a:"The Star-Spangled Banner",hook:"Star-Spangled Banner — chan nasyonal!"},
+  {id:99,cat:"Fèt Nasyonal",kr_q:"Ki lè nou selebre Jounen Endepandans?",en_q:"When do we celebrate Independence Day?",kr_a:"Kat Jiyè",en_a:"July 4",hook:"Kat Jiyè — Jounen Endepandans!"},
+  {id:100,cat:"Fèt Nasyonal",kr_q:"Nonmen de fèt nasyonal Ameriken.",en_q:"Name two national U.S. holidays.",kr_a:"Premye Janvye, Jounen MLK, Kat Jiyè, Aksyon de Gras, Nwèl",en_a:"New Year's Day, MLK Day, Independence Day, Thanksgiving, Christmas",hook:"Nwèl, Kat Jiyè, Aksyon de Gras — fèt nasyonal!"}
+];
+
+// ══════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════
+let lang='en', selState=null, curMode='';
+let audioEnabled=false;      // user must opt IN to audio
+let currentlyPlaying=null;   // which listen-key is active
+
+let krikQ=[], krikIdx=0, krikScores={};
+let krikWrong=[];
+let pracQ=[], pracIdx=0;
+let flashIdx=0, flashFlipped=false;
+let flashOrder=[...QS.keys()];
+let examQ=[], examIdx=0, examScore=0, examWeak=[];
+let examWrong=[];
+let examDeck=[], examCursor=0;
+
+const CAT_EN={
+  "Prensip Demokrasi":"Principles of American Democracy",
+  "Sistèm Gouvènman":"System of Government",
+  "Dwa ak Responsablite":"Rights and Responsibilities",
+  "Istwa Kolonyal":"Colonial Period and Independence",
+  "Istwa 1800 yo":"1800s History",
+  "Istwa Resan":"Recent American History",
+  "Jewografi":"Geography",
+  "Senbòl":"Symbols",
+  "Fèt Nasyonal":"National Holidays"
+};
+
+const UI={
+  kr:{
+    welcomeEyebrow:"Sitwayen Ayisyen",
+    welcomeTitle:`Aprann.<em>Pratike.</em>`,
+    welcomeTagline:`"Vin Sitwayen Ameriken."`,
+    welcomeRule:"100 Kesyon Ofisyèl USCIS",
+    welcomeHint:"Tape pou tande · Tap to listen",
+    welcomeStart:"Kòmanse · Start",
+    welcomeHow:"Kijan aplikasyon an mache",
+    welcomeSkip:"Ale dirèkteman · Skip state →",
+    instTitle:"Kijan pou itilize aplikasyon an",
+    instSub:"Enstriksyon rapid",
+    instOverviewTitle:"Kòmanse vit",
+    instOverviewBody:"Chwazi lang ou, limen son si ou vle tande kestyon yo, epi chwazi eta ou pou kestyon sou senatè, gouvènè, ak kapital la ka parèt kòrèkteman.",
+    instModesTitle:"Mòd etid yo",
+    instMode1:"<strong>Krik-Krak:</strong> tande kestyon an, reponn li a awotvwa, epi make si ou te konnen li.",
+    instMode2:"<strong>Pratike:</strong> li kestyon yo youn apre lòt ak repons ofisyèl yo.",
+    instMode3:"<strong>Kat Memwa:</strong> vire kat yo, tande yo, epi melanje yo pou revizyon rapid.",
+    instMode4:"<strong>Egzamen:</strong> fè yon seri 10 kestyon epi resevwa nòt, ankourajman, ak kestyon ou rate yo.",
+    instNavTitle:"Kijan pou navige",
+    instNav1:"Sèvi ak bouton retounen an pou tounen sou ekran anvan an.",
+    instNav2:"Sou ekran mòd yo, bouton son an limen oswa etenn odyo a nenpòt lè.",
+    instNav3:"Apre chak egzamen oswa sesyon Krik-Krak, gade rezilta yo pou wè kestyon ou rate yo ak bon repons yo.",
+    instNav4:"Ou ka sote chwa eta a si ou vle kòmanse touswit, men kestyon eta yo ap pi bon si ou chwazi eta ou.",
+    instStart:"Kòmanse kounye a",
+    stateTitle:"Ki eta ou rete?",
+    stateSub:"Which state do you live in?",
+    stateIntro:"Chwazi eta ou pou nou ka pwograme kesyon sou Senatè ak Gouvènè ou yo kòrèkteman.",
+    statePlaceholder:"Chèche eta ou · Search...",
+    modeTitle:"Kijan ou vle aprann?",
+    modeSub:"Choose your learning mode",
+    modeSection:"Chwazi yon fòma · Select a mode",
+    modeKrikEyebrow:"Kiltirèl",
+    modeKrikTitle:"Krik-Krak!",
+    modeKrikSub:"Jwèt oral ayisyen",
+    modePracticeTitle:"Pratike",
+    modePracticeSub:"Etidye tout kesyon",
+    modeFlashTitle:"Kat Memwa",
+    modeFlashSub:"Flashcards",
+    modeExamTitle:"Egzamen",
+    modeExamSub:"10 kesyon ofisyèl",
+    modeExplainTitle:"Krik! — Krak!",
+    modeExplainBody:`Nan kilti ayisyen, yon moun di <strong>"Krik!"</strong> epi tout moun reponn <strong>"Krak!"</strong> — epi yo rakonte yon istwa pou transmèt konesans. Nou itilize menm fòma sa a pou aprann sivik.`,
+    audioOn:"Son On",
+    audioOff:"Son Off",
+    senators:"Senatè",
+    all:"Tout",
+    question:"Kesyon",
+    card:"Kat",
+    of100:"sou 100",
+    answerLabel:"Repons · Answer",
+    memoryCue:"Krik-Krak Memwa",
+    reveal:"Reveye ✦",
+    listenQuestion:"Tande kesyon an",
+    listenAnswer:"Tande repons lan",
+    tapToHear:"Tape pou tande kat la · Tap to hear",
+    questionTap:"Kesyon · Tape pou tande",
+    krikPrompt:`Di "Krak!" epi bay repons ou...`,
+    missed:"Pa t konnen",
+    knew:"Mwen konnen",
+    previous:"← Retounen",
+    next:"Pwochen →",
+    shuffle:"Melanje",
+    flashTapFront:"Tape pou wè repons",
+    flashTapBack:"Tape pou retounen",
+    flashQuestionSide:"Kesyon · Question",
+    flashAnswerSide:"Repons · Answer",
+    examTitle:"Egzamen USCIS",
+    practiceTitle:"Pratike",
+    flashTitle:"Kat Memwa",
+    krikTitle:"Krik-Krak!",
+    resultsTitle:"Rezilta Ou · Your Results",
+    resultsSub:"Sitwayen Ayisyen",
+    resultsEyebrow:"Rezilta · Results",
+    weakTitle:"Domèn pou etidye ankò",
+    missTitle:"Revize kestyon ou rate yo",
+    correctAnswerLabel:"Bon repons:",
+    restart:"Rekòmanse · Play again",
+    home:"Lakay · Home",
+    examCorrect:"Trè Byen! Kòrèk!",
+    examCorrectAnswer:"Repons kòrèk: ",
+    examSpeakCorrect:"Trè Byen! Kòrèk!",
+    examSpeakAnswer:"Repons kòrèk la se: ",
+    resultExcellent:"Ekselan!",
+    resultExcellentMsg:"Ou pare pou egzamen an!",
+    resultGood:"Bon Travay!",
+    resultGoodMsg:"Kontinye pratike!",
+    resultKeep:"Bon Eseye!",
+    resultKeepMsg:"Pa dekouraje — ou kapab!"
+  },
+  en:{
+    welcomeEyebrow:"US Citizenship Study",
+    welcomeTitle:`Learn.<em>Practice.</em>`,
+    welcomeTagline:`"Prepare for the U.S. citizenship test."`,
+    welcomeRule:"100 Official USCIS Questions",
+    welcomeHint:"Tap to listen",
+    welcomeStart:"Start",
+    welcomeHow:"How the app works",
+    welcomeSkip:"Skip state selection →",
+    instTitle:"How to use the app",
+    instSub:"Quick instructions",
+    instOverviewTitle:"Start here",
+    instOverviewBody:"Choose your language, turn audio on if you want to hear the questions, and select your state so state-specific civics answers stay accurate.",
+    instModesTitle:"Study modes",
+    instMode1:"<strong>Call and Response:</strong> hear the question, say your answer out loud, and mark whether you knew it.",
+    instMode2:"<strong>Practice:</strong> move through the questions in order with the official answers shown.",
+    instMode3:"<strong>Flashcards:</strong> flip cards, listen to them, and shuffle the deck for quick review.",
+    instMode4:"<strong>Exam:</strong> take a 10-question set and get a score, encouragement, and a review of what you missed.",
+    instNavTitle:"How to navigate",
+    instNav1:"Use the back button at the top of each screen to return to the previous step.",
+    instNav2:"On study screens, the audio button turns spoken playback on or off at any time.",
+    instNav3:"After each exam or call-and-response session, review the results screen to see missed questions and correct answers.",
+    instNav4:"You can skip state selection to start faster, but state-specific questions work best after you choose your state.",
+    instStart:"Start now",
+    stateTitle:"Which state do you live in?",
+    stateSub:"Choose your state",
+    stateIntro:"Choose your state so the app can show the correct senator, governor, and capital answers.",
+    statePlaceholder:"Search for your state...",
+    modeTitle:"How do you want to study?",
+    modeSub:"Choose your learning mode",
+    modeSection:"Select a mode",
+    modeKrikEyebrow:"Call and response",
+    modeKrikTitle:"Call and Response",
+    modeKrikSub:"Speak your answer out loud",
+    modePracticeTitle:"Practice",
+    modePracticeSub:"Study all 100 questions",
+    modeFlashTitle:"Flashcards",
+    modeFlashSub:"Flip through study cards",
+    modeExamTitle:"Exam",
+    modeExamSub:"10 official-style questions",
+    modeExplainTitle:"Call and Response",
+    modeExplainBody:"Hear a question, answer it out loud, then reveal the official response and a short memory cue. This mode is built for active recall, not passive reading.",
+    audioOn:"Audio On",
+    audioOff:"Audio Off",
+    senators:"Senators",
+    all:"All",
+    question:"Question",
+    card:"Card",
+    of100:"of 100",
+    answerLabel:"Answer",
+    memoryCue:"Memory Cue",
+    reveal:"Reveal ✦",
+    listenQuestion:"Listen to question",
+    listenAnswer:"Listen to answer",
+    tapToHear:"Tap to hear this card",
+    questionTap:"Question · Tap to listen",
+    krikPrompt:"Say your answer out loud, then reveal it.",
+    missed:"I missed it",
+    knew:"I knew it",
+    previous:"← Previous",
+    next:"Next →",
+    shuffle:"Shuffle",
+    flashTapFront:"Tap to see the answer",
+    flashTapBack:"Tap to flip back",
+    flashQuestionSide:"Question",
+    flashAnswerSide:"Answer",
+    examTitle:"USCIS Exam",
+    practiceTitle:"Practice",
+    flashTitle:"Flashcards",
+    krikTitle:"Call and Response",
+    resultsTitle:"Your Results",
+    resultsSub:"US Citizenship Study",
+    resultsEyebrow:"Results",
+    weakTitle:"Study again",
+    missTitle:"Review missed questions",
+    correctAnswerLabel:"Correct answer:",
+    restart:"Start again",
+    home:"Home",
+    examCorrect:"Correct!",
+    examCorrectAnswer:"Correct answer: ",
+    examSpeakCorrect:"Correct!",
+    examSpeakAnswer:"The correct answer is: ",
+    resultExcellent:"Excellent!",
+    resultExcellentMsg:"You are ready for the exam.",
+    resultGood:"Good job!",
+    resultGoodMsg:"Keep practicing.",
+    resultKeep:"Keep going!",
+    resultKeepMsg:"Study the weak areas and try again."
+  }
+};
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function go(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+n).classList.add('active');
+  window.scrollTo(0,0);
+  stopAudio();
+}
+
+// ══════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('[data-lang-btn]').forEach(btn=>{
+    btn.classList.toggle('on', btn.dataset.lang===l);
+  });
+  updateStaticUI();
+  refreshCurrentScreen();
+}
+
+function getCategoryLabel(cat){ return lang==='en' ? (CAT_EN[cat] || cat) : cat; }
+
+function getQuestionText(q){ return lang==='en' ? q.en_q : q.kr_q; }
+function getAnswerText(q){
+  const {kr_a,en_a}=getQA(q);
+  return lang==='en' ? en_a : kr_a;
+}
+
+function getHookText(q){
+  const answer=getAnswerText(q).trim();
+  const lower=answer.toLowerCase();
+  const stateHint=lang==='en' ? 'Hint: think about your selected state.' : 'Sijesyon: panse ak eta ou chwazi a.';
+  const listHint=lang==='en' ? 'Hint: any one valid example works.' : 'Sijesyon: nenpòt youn nan bon egzanp yo mache.';
+  const numberHint=lang==='en' ? 'Hint: this answer is a number or date.' : 'Sijesyon: repons sa a se yon nimewo oswa yon dat.';
+
+  if(answer.startsWith('[')) return stateHint;
+  if(/[0-9]/.test(answer) || /\b(one|two|three|four|five|six|seven|eight|nine|ten|hundred|thousand|january|february|march|april|may|june|july|august|september|october|november|december|de|twa|kat|senk|sis|sèt|uit|nèf|dis|san|mil|janvye|fevriye|mas|avril|me|jen|jiyè|out|septanm|oktòb|novanm|desanm)\b/i.test(lower)){
+    return numberHint;
+  }
+  if(/[;,]/.test(answer) || /\bor\b|\boswa\b|\band\b|\bak\b/i.test(lower)){
+    return listHint;
+  }
+
+  const stopwords=new Set(['the','a','an','of','and','or','to','for','in','on','at','from','your','state','la','an','ak','oswa','nan','pou','sou','eta','ou']);
+  const words=answer
+    .replace(/[()[\].,]/g,' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(w=>!stopwords.has(w.toLowerCase()));
+  const initials=words.slice(0,4).map(w=>w[0].toUpperCase()).join('.');
+  if(initials){
+    return lang==='en'
+      ? `Hint: initials ${initials}.`
+      : `Sijesyon: inisyal ${initials}.`;
+  }
+  return lang==='en' ? 'Hint: think about the key civics term.' : 'Sijesyon: panse ak mo sivik enpòtan an.';
+}
+
+function getSpeechLang(){ return lang==='en' ? 'en-US' : 'fr-FR'; }
+
+function shuffledQuestions(){
+  return [...QS].sort(()=>Math.random()-.5);
+}
+
+function nextExamBatch(size=10){
+  if(!examDeck.length || examCursor>=examDeck.length){
+    examDeck=shuffledQuestions();
+    examCursor=0;
+  }
+  if(examCursor+size>examDeck.length){
+    const remaining=examDeck.slice(examCursor);
+    examDeck=shuffledQuestions();
+    examCursor=0;
+    const needed=size-remaining.length;
+    const batch=remaining.concat(examDeck.slice(examCursor, examCursor+needed));
+    examCursor+=needed;
+    return batch;
+  }
+  const batch=examDeck.slice(examCursor, examCursor+size);
+  examCursor+=size;
+  return batch;
+}
+
+function updateStaticUI(){
+  const t=UI[lang];
+  const set=(id,val,html=false)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(html) el.innerHTML=val; else el.textContent=val;
+  };
+  set('welcome-eyebrow',t.welcomeEyebrow);
+  set('welcome-title',t.welcomeTitle,true);
+  set('welcome-tagline',t.welcomeTagline,true);
+  set('welcome-rule',t.welcomeRule);
+  set('w-hint',t.welcomeHint);
+  set('welcome-start',t.welcomeStart);
+  set('welcome-how',t.welcomeHow);
+  set('welcome-skip',t.welcomeSkip);
+  set('inst-title',t.instTitle);
+  set('inst-sub',t.instSub);
+  set('inst-overview-title',t.instOverviewTitle);
+  set('inst-overview-body',t.instOverviewBody);
+  set('inst-modes-title',t.instModesTitle);
+  set('inst-mode-1',t.instMode1,true);
+  set('inst-mode-2',t.instMode2,true);
+  set('inst-mode-3',t.instMode3,true);
+  set('inst-mode-4',t.instMode4,true);
+  set('inst-nav-title',t.instNavTitle);
+  set('inst-nav-1',t.instNav1);
+  set('inst-nav-2',t.instNav2);
+  set('inst-nav-3',t.instNav3);
+  set('inst-nav-4',t.instNav4);
+  set('inst-start',t.instStart);
+  set('state-title',t.stateTitle);
+  set('state-sub',t.stateSub);
+  set('state-intro',t.stateIntro);
+  const search=document.getElementById('state-search');
+  if(search) search.placeholder=t.statePlaceholder;
+  set('mode-title',t.modeTitle);
+  set('mode-sub',t.modeSub);
+  set('mode-section-lbl',t.modeSection);
+  set('mode-krik-eyebrow',t.modeKrikEyebrow);
+  set('mode-krik-title',t.modeKrikTitle);
+  set('mode-krik-sub',t.modeKrikSub);
+  set('mode-practice-title',t.modePracticeTitle);
+  set('mode-practice-sub',t.modePracticeSub);
+  set('mode-flash-title',t.modeFlashTitle);
+  set('mode-flash-sub',t.modeFlashSub);
+  set('mode-exam-title',t.modeExamTitle);
+  set('mode-exam-sub',t.modeExamSub);
+  set('mode-explain-title',t.modeExplainTitle);
+  set('mode-explain-body',t.modeExplainBody,true);
+  const lbl=document.getElementById('audio-toggle-lbl');
+  if(lbl) lbl.textContent=audioEnabled?t.audioOn:t.audioOff;
+}
+
+function refreshCurrentScreen(){
+  buildStates(document.getElementById('state-search')?.value || '');
+  if(curMode==='krik' && document.getElementById('s-krik').classList.contains('active')) loadKrik();
+  if(curMode==='practice' && document.getElementById('s-practice').classList.contains('active')){ buildCatFilter(); loadPrac(); }
+  if(curMode==='flash' && document.getElementById('s-flash').classList.contains('active')) loadFlash();
+  if(curMode==='exam' && document.getElementById('s-exam').classList.contains('active')) loadExam();
+  if(document.getElementById('s-results').classList.contains('active')) showResults();
+}
+
+// ══════════════════════════════════════════
+// AUDIO ENGINE — user-controlled only
+// ══════════════════════════════════════════
+function stopAudio(){
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  currentlyPlaying=null;
+  resetAllListenUI();
+}
+
+function resetAllListenUI(){
+  // Reset all listen-card buttons to play state
+  ['krik-listen-btn','prac-listen-btn','flash-listen-btn','exam-listen-btn'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    btn.classList.remove('playing');
+    const pi=document.getElementById(id.replace('-btn','-icon').replace('listen','play'));
+    const si=document.getElementById(id.replace('-btn','-icon').replace('listen','stop'));
+    if(pi) pi.style.display='';
+    if(si) si.style.display='none';
+  });
+  // Reset pills
+  ['krik-ans-pill','prac-ans-pill'].forEach(id=>{
+    const p=document.getElementById(id);
+    if(p) p.classList.remove('playing');
+  });
+}
+
+function speakText(txt, key, onDone){
+  if(!audioEnabled){
+    showAudioOffToast();
+    return;
+  }
+  if(!window.speechSynthesis) return;
+  // If same key is playing → stop
+  if(currentlyPlaying===key){
+    stopAudio();
+    return;
+  }
+  stopAudio();
+  currentlyPlaying=key;
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang=getSpeechLang(); u.rate=0.9; u.pitch=1.0;
+  u.onend=()=>{ currentlyPlaying=null; resetAllListenUI(); if(onDone) onDone(); };
+  u.onerror=()=>{ currentlyPlaying=null; resetAllListenUI(); };
+  speechSynthesis.speak(u);
+}
+
+function setListenCardPlaying(btnId, playing){
+  const btn=document.getElementById(btnId);
+  if(!btn) return;
+  btn.classList.toggle('playing', playing);
+  // Swap play/stop icons
+  const baseId=btnId.replace('-btn','');
+  const pi=document.getElementById(baseId.replace('listen','play')+'-icon');
+  const si=document.getElementById(baseId.replace('listen','stop')+'-icon');
+  if(pi) pi.style.display=playing?'none':'';
+  if(si) si.style.display=playing?'':'none';
+}
+
+// SINGLE ENTRY POINT for all listen interactions
+function toggleListen(key){
+  if(!audioEnabled){ showAudioOffToast(); return; }
+  
+  if(key==='krik-q'){
+    if(currentlyPlaying===key){ stopAudio(); setListenCardPlaying('krik-listen-btn',false); return; }
+    const q=krikQ[krikIdx];
+    setListenCardPlaying('krik-listen-btn',true);
+    speakText(getQuestionText(q), key, ()=>setListenCardPlaying('krik-listen-btn',false));
+  }
+  else if(key==='krik-a'){
+    const q=krikQ[krikIdx];
+    const pill=document.getElementById('krik-ans-pill');
+    if(currentlyPlaying===key){ stopAudio(); if(pill) pill.classList.remove('playing'); return; }
+    if(pill) pill.classList.add('playing');
+    speakText(getAnswerText(q)+'. '+getHookText(q), key, ()=>{ if(pill) pill.classList.remove('playing'); });
+  }
+  else if(key==='prac-q'){
+    if(currentlyPlaying===key){ stopAudio(); setListenCardPlaying('prac-listen-btn',false); return; }
+    const q=pracQ[pracIdx%pracQ.length];
+    setListenCardPlaying('prac-listen-btn',true);
+    speakText(getQuestionText(q), key, ()=>setListenCardPlaying('prac-listen-btn',false));
+  }
+  else if(key==='prac-a'){
+    const q=pracQ[pracIdx%pracQ.length];
+    const pill=document.getElementById('prac-ans-pill');
+    if(currentlyPlaying===key){ stopAudio(); if(pill) pill.classList.remove('playing'); return; }
+    if(pill) pill.classList.add('playing');
+    speakText(getAnswerText(q)+'. '+getHookText(q), key, ()=>{ if(pill) pill.classList.remove('playing'); });
+  }
+  else if(key==='flash'){
+    if(currentlyPlaying===key){ stopAudio(); setListenCardPlaying('flash-listen-btn',false); return; }
+    const q=QS[flashOrder[flashIdx%flashOrder.length]];
+    const txt=flashFlipped ? getAnswerText(q)+'. '+getHookText(q) : getQuestionText(q);
+    setListenCardPlaying('flash-listen-btn',true);
+    speakText(txt, key, ()=>setListenCardPlaying('flash-listen-btn',false));
+  }
+  else if(key==='exam-q'){
+    if(currentlyPlaying===key){ stopAudio(); setListenCardPlaying('exam-listen-btn',false); return; }
+    const q=examQ[examIdx];
+    setListenCardPlaying('exam-listen-btn',true);
+    speakText(getQuestionText(q), key, ()=>setListenCardPlaying('exam-listen-btn',false));
+  }
+}
+
+// Welcome screen toggle (special case — its own button)
+function toggleWelcomeAudio(){
+  const btn=document.getElementById('w-listen-btn');
+  if(currentlyPlaying==='welcome'){
+    stopAudio();
+    btn.classList.remove('playing');
+    return;
+  }
+  // Enable audio if not yet enabled, then speak
+  audioEnabled=true;
+  updateAllAudioBtns();
+  btn.classList.add('playing');
+  const txt=lang==='kr'
+    ? 'Bienveni nan Sitwayen Ayisyen! Aprann pase egzamen sitwayènte Ameriken an. Kòmanse kounye a!'
+    : 'Welcome to the U.S. citizenship study app. Practice the official questions and start now.';
+  speakText(txt, 'welcome', ()=>btn.classList.remove('playing'));
+}
+
+// ══════════════════════════════════════════
+// AUDIO TOGGLE (persistent on/off)
+// ══════════════════════════════════════════
+function toggleAudioEnabled(){
+  audioEnabled=!audioEnabled;
+  if(!audioEnabled) stopAudio();
+  updateAllAudioBtns();
+}
+
+function updateAllAudioBtns(){
+  const lbl=audioEnabled?UI[lang].audioOn:UI[lang].audioOff;
+  ['audio-toggle-btn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.classList.toggle('enabled', audioEnabled);
+    const span=el.querySelector('span');
+    if(span) span.textContent=lbl;
+  });
+  // header icon buttons (no label)
+  ['krik-audio-btn','prac-audio-btn','flash-audio-btn','exam-audio-btn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('enabled', audioEnabled);
+  });
+  // Update listen cards / pills to reflect disabled state
+  document.querySelectorAll('.listen-card, .listen-pill').forEach(el=>{
+    el.classList.toggle('disabled-audio', !audioEnabled);
+  });
+}
+
+function showAudioOffToast(){
+  // Briefly flash the toggle button as a hint
+  const btn=document.getElementById('audio-toggle-btn') || 
+            document.getElementById('krik-audio-btn') ||
+            document.getElementById('prac-audio-btn') ||
+            document.getElementById('flash-audio-btn') ||
+            document.getElementById('exam-audio-btn');
+  if(!btn) return;
+  btn.style.borderColor='var(--gold)';
+  btn.style.color='var(--gold)';
+  setTimeout(()=>{ btn.style.borderColor=''; btn.style.color=''; }, 800);
+}
+
+// ══════════════════════════════════════════
+// STATE PICKER
+// ══════════════════════════════════════════
+function buildStates(f=''){
+  const fl=f.toLowerCase();
+  document.getElementById('state-list').innerHTML=STATES
+    .filter(s=>s.n.toLowerCase().includes(fl))
+    .map(s=>`
+      <div class="state-item${selState&&selState.n===s.n?' sel':''}" onclick="pickState('${s.n}')">
+        <div>
+          <div class="state-nm">${s.n}</div>
+          <div class="state-meta">${UI[lang].senators}: ${s.s}</div>
+        </div>
+        <div class="state-check"><svg viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1"/></svg></div>
+      </div>`).join('');
+}
+
+function filterStates(){ buildStates(document.getElementById('state-search').value); }
+
+function pickState(name){
+  selState=STATES.find(s=>s.n===name);
+  buildStates(document.getElementById('state-search').value);
+  document.getElementById('badge-state-name').textContent=selState.n;
+  document.getElementById('badge-state-sen').textContent=UI[lang].senators+': '+selState.s;
+  document.getElementById('state-badge').style.display='flex';
+  setTimeout(()=>go('mode'), 260);
+}
+
+function getQA(q){
+  let kr_a=q.kr_a, en_a=q.en_a;
+  if(q.ss && selState){ const v=selState[q.sf]; if(v){ kr_a=v; en_a=v; } }
+  return {kr_a, en_a};
+}
+
+// ══════════════════════════════════════════
+// MODE START
+// ══════════════════════════════════════════
+function startMode(m){
+  curMode=m; stopAudio();
+  if(m==='krik'){
+    krikQ=[...QS].sort(()=>Math.random()-.5);
+    krikIdx=0; krikScores={}; krikWrong=[];
+    go('krik'); loadKrik();
+  } else if(m==='practice'){
+    pracQ=[...QS]; pracIdx=0;
+    buildCatFilter(); go('practice'); loadPrac();
+  } else if(m==='flash'){
+    flashIdx=0; flashFlipped=false; flashOrder=[...QS.keys()];
+    go('flash'); loadFlash();
+  } else if(m==='exam'){
+    examQ=nextExamBatch(10);
+    examIdx=0; examScore=0; examWeak=[]; examWrong=[];
+    go('exam'); loadExam();
+  }
+}
+
+// ══════════════════════════════════════════
+// KRIK-KRAK
+// ══════════════════════════════════════════
+function loadKrik(){
+  if(krikIdx>=krikQ.length){ showResults(); return; }
+  stopAudio();
+  const q=krikQ[krikIdx], n=krikIdx+1, tot=krikQ.length;
+  document.querySelector('#s-krik .hdr-title').textContent=UI[lang].krikTitle;
+  document.getElementById('krik-hdr-sub').textContent=`${UI[lang].question} ${n} / ${tot}`;
+  document.getElementById('krik-bar').style.width=Math.round((n/tot)*100)+'%';
+  document.getElementById('krik-prog-l').textContent=`${UI[lang].question} ${n}`;
+  document.getElementById('krik-prog-r').textContent=`/ ${tot}`;
+  document.getElementById('krik-q-kr').textContent=getQuestionText(q);
+  document.getElementById('krik-q-en').textContent=lang==='en'?'':q.en_q;
+  document.querySelector('#krik-listen-btn .listen-card-label').textContent=UI[lang].questionTap;
+  document.querySelector('.krak-prompt').textContent=UI[lang].krikPrompt;
+  document.getElementById('reveal-btn').textContent=UI[lang].reveal;
+  document.querySelector('#krik-ans .ans-tag').textContent=UI[lang].answerLabel;
+  document.getElementById('krik-ans-pill').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> ${UI[lang].listenAnswer}`;
+  document.querySelector('#krik-hook .hook-lbl').textContent=UI[lang].memoryCue;
+  document.querySelectorAll('#krik-grade .grade-btn')[0].textContent=UI[lang].missed;
+  document.querySelectorAll('#krik-grade .grade-btn')[1].textContent=UI[lang].knew;
+  document.getElementById('krik-ans').classList.remove('show');
+  document.getElementById('krik-ans-audio-row').style.display='none';
+  document.getElementById('krik-hook').style.display='none';
+  document.getElementById('krik-grade').classList.remove('show');
+  document.getElementById('reveal-btn').disabled=false;
+  setListenCardPlaying('krik-listen-btn',false);
+}
+
+function revealKrik(){
+  const q=krikQ[krikIdx]; const {kr_a,en_a}=getQA(q);
+  document.getElementById('krik-a-kr').textContent=lang==='en'?en_a:kr_a;
+  document.getElementById('krik-a-en').textContent=lang==='en'?'':en_a;
+  document.getElementById('krik-hook-txt').textContent=getHookText(q);
+  document.getElementById('krik-ans').classList.add('show');
+  document.getElementById('krik-ans-audio-row').style.display='block';
+  document.getElementById('krik-hook').style.display='block';
+  document.getElementById('krik-grade').classList.add('show');
+  document.getElementById('reveal-btn').disabled=true;
+}
+
+function gradeKrik(ok){
+  krikScores[krikIdx]=ok;
+  if(!ok){
+    const q=krikQ[krikIdx];
+    krikWrong.push({q, answer:getAnswerText(q)});
+  }
+  krikIdx++;
+  loadKrik();
+}
+
+// ══════════════════════════════════════════
+// PRACTICE
+// ══════════════════════════════════════════
+const CATS=[...new Set(QS.map(q=>q.cat))];
+
+function buildCatFilter(){
+  document.getElementById('cat-filter').innerHTML=
+    `<div class="f-chip on" onclick="filterCat(this,'all')">${UI[lang].all}</div>`+
+    CATS.map(c=>`<div class="f-chip" onclick="filterCat(this,'${c}')">${getCategoryLabel(c)}</div>`).join('');
+}
+
+function filterCat(el,cat){
+  document.querySelectorAll('.f-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  pracQ=cat==='all'?[...QS]:QS.filter(q=>q.cat===cat);
+  pracIdx=0; loadPrac();
+}
+
+function loadPrac(){
+  if(!pracQ.length) return;
+  stopAudio();
+  const q=pracQ[pracIdx%pracQ.length]; const {kr_a,en_a}=getQA(q);
+  const n=pracIdx+1, tot=pracQ.length;
+  document.querySelector('#s-practice .hdr-title').textContent=UI[lang].practiceTitle;
+  document.getElementById('prac-hdr-sub').textContent=`${UI[lang].question} ${n} / ${tot}`;
+  document.getElementById('prac-bar').style.width=Math.round((n/tot)*100)+'%';
+  document.getElementById('prac-prog-l').textContent=`${UI[lang].question} ${n}`;
+  document.getElementById('prac-prog-r').textContent=`/ ${tot}`;
+  document.getElementById('p-cat').textContent=getCategoryLabel(q.cat);
+  document.getElementById('p-num').textContent=`#${q.id} ${UI[lang].of100}`;
+  document.getElementById('p-q-kr').textContent=getQuestionText(q);
+  document.getElementById('p-q-en').textContent=lang==='en'?'':q.en_q;
+  document.getElementById('p-a-kr').textContent=lang==='en'?en_a:kr_a;
+  document.getElementById('p-a-en').textContent=lang==='en'?'':en_a;
+  document.getElementById('p-hook').textContent=getHookText(q);
+  document.querySelector('#prac-listen-btn .listen-card-label').textContent=UI[lang].questionTap;
+  document.querySelector('#s-practice .ans-lbl').textContent=UI[lang].answerLabel;
+  document.getElementById('prac-ans-pill').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> ${UI[lang].listenAnswer}`;
+  document.querySelector('#s-practice .hook-lbl').textContent=UI[lang].memoryCue;
+  document.querySelectorAll('#s-practice .nav-pair .btn')[0].textContent=UI[lang].previous;
+  document.querySelectorAll('#s-practice .nav-pair .btn')[1].textContent=UI[lang].next;
+  setListenCardPlaying('prac-listen-btn',false);
+  const pill=document.getElementById('prac-ans-pill');
+  if(pill) pill.classList.remove('playing');
+}
+
+function navPrac(d){
+  pracIdx=Math.max(0,Math.min(pracQ.length-1,pracIdx+d));
+  loadPrac();
+}
+
+// ══════════════════════════════════════════
+// FLASHCARD
+// ══════════════════════════════════════════
+function loadFlash(){
+  stopAudio();
+  const q=QS[flashOrder[flashIdx%flashOrder.length]];
+  flashFlipped=false;
+  document.getElementById('flash-inner').classList.remove('flipped');
+  document.querySelector('#s-flash .hdr-title').textContent=UI[lang].flashTitle;
+  document.getElementById('fc-q').textContent=getQuestionText(q);
+  document.getElementById('fc-a').textContent=getAnswerText(q);
+  document.getElementById('fc-hook').textContent=getHookText(q);
+  document.getElementById('flash-listen-text').textContent=UI[lang].listenQuestion;
+  const n=flashIdx+1;
+  document.getElementById('flash-hdr-sub').textContent=`${UI[lang].card} ${n} / ${flashOrder.length}`;
+  document.getElementById('flash-bar').style.width=Math.round((n/flashOrder.length)*100)+'%';
+  document.getElementById('flash-prog-l').textContent=`${UI[lang].card} ${n}`;
+  document.getElementById('flash-prog-r').textContent=`/ ${flashOrder.length}`;
+  document.querySelectorAll('#s-flash .flash-side')[0].textContent=UI[lang].flashQuestionSide;
+  document.querySelectorAll('#s-flash .flash-side')[1].textContent=UI[lang].flashAnswerSide;
+  document.querySelectorAll('#s-flash .flash-tap')[0].textContent=UI[lang].flashTapFront;
+  document.querySelectorAll('#s-flash .flash-tap')[1].textContent=UI[lang].flashTapBack;
+  document.querySelector('#flash-listen-btn .listen-card-label').textContent=UI[lang].tapToHear;
+  document.querySelectorAll('#s-flash .flash-nav .btn')[0].textContent=UI[lang].previous;
+  document.querySelectorAll('#s-flash .flash-nav .btn')[1].textContent=UI[lang].shuffle;
+  document.querySelectorAll('#s-flash .flash-nav .btn')[2].textContent=UI[lang].next;
+  document.querySelector('#s-flash .hook-lbl').textContent=UI[lang].memoryCue;
+  setListenCardPlaying('flash-listen-btn',false);
+}
+
+function flipCard(){
+  stopAudio();
+  flashFlipped=!flashFlipped;
+  document.getElementById('flash-inner').classList.toggle('flipped',flashFlipped);
+  document.getElementById('flash-listen-text').textContent=flashFlipped?UI[lang].listenAnswer:UI[lang].listenQuestion;
+  setListenCardPlaying('flash-listen-btn',false);
+}
+
+function navFlash(d){
+  flashIdx=(flashIdx+d+flashOrder.length)%flashOrder.length;
+  loadFlash();
+}
+
+function shuffleFlash(){
+  stopAudio();
+  flashOrder=[...QS.keys()].sort(()=>Math.random()-.5);
+  flashIdx=0;
+  loadFlash();
+}
+
+// ══════════════════════════════════════════
+// EXAM
+// ══════════════════════════════════════════
+function loadExam(){
+  if(examIdx>=examQ.length){ showResults(); return; }
+  stopAudio();
+  const q=examQ[examIdx];
+  const n=examIdx+1;
+  document.querySelector('#s-exam .hdr-title').textContent=UI[lang].examTitle;
+  document.getElementById('exam-hdr-sub').textContent=`${UI[lang].question} ${n} / 10`;
+  document.getElementById('exam-bar').style.width=(n*10)+'%';
+  document.getElementById('exam-prog-l').textContent=`${UI[lang].question} ${n}`;
+  document.getElementById('exam-prog-r').textContent=`/ 10`;
+  document.getElementById('e-cat').textContent=getCategoryLabel(q.cat);
+  document.getElementById('e-q-kr').textContent=getQuestionText(q);
+  document.getElementById('e-q-en').textContent=lang==='en'?'':q.en_q;
+  document.querySelector('#exam-listen-btn .listen-card-label').textContent=UI[lang].questionTap;
+  document.getElementById('exam-fb').className='exam-fb';
+  const correct=getAnswerText(q);
+  const pool=QS.filter(x=>x.id!==q.id).sort(()=>Math.random()-.5).slice(0,3);
+  const choices=[correct,...pool.map(o=>getAnswerText(o))].sort(()=>Math.random()-.5);
+  document.getElementById('exam-choices').innerHTML=choices.map(c=>`
+    <button class="choice" onclick="answerExam(this,'${c.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${correct.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${q.cat}')">${c}</button>
+  `).join('');
+  setListenCardPlaying('exam-listen-btn',false);
+}
+
+function answerExam(btn,chosen,correct,cat){
+  stopAudio();
+  document.querySelectorAll('.choice').forEach(b=>b.disabled=true);
+  const ok=chosen===correct;
+  btn.classList.add(ok?'correct':'wrong');
+  if(!ok){
+    document.querySelectorAll('.choice').forEach(b=>{ if(b.textContent.trim()===correct) b.classList.add('correct'); });
+    examWeak.push(cat);
+    examWrong.push({q:examQ[examIdx], answer:correct});
+  } else examScore++;
+  const fb=document.getElementById('exam-fb');
+  fb.textContent=ok?UI[lang].examCorrect:`${UI[lang].examCorrectAnswer}${correct}`;
+  fb.className='exam-fb show '+(ok?'fb-ok':'fb-no');
+  // Auto-speak feedback only if audio is on
+  if(audioEnabled){
+    const ftxt=ok?UI[lang].examSpeakCorrect:`${UI[lang].examSpeakAnswer}${correct}`;
+    speakText(ftxt, 'exam-feedback', ()=>{});
+  }
+  setTimeout(()=>{ examIdx++; loadExam(); }, 2400);
+}
+
+// ══════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════
+function showResults(){
+  go('results');
+  let score=0, total=10;
+  if(curMode==='krik'){ total=krikQ.length; score=Object.values(krikScores).filter(Boolean).length; }
+  else if(curMode==='exam'){ score=examScore; total=10; }
+  document.getElementById('result-score').textContent=score;
+  document.getElementById('result-of').textContent='/ '+total;
+  const pct=total>0?score/total:0;
+  const ring=document.getElementById('result-ring');
+  ring.classList.toggle('fail',pct<0.6);
+  ring.classList.remove('ring-pop'); void ring.offsetWidth; ring.classList.add('ring-pop');
+  let grade, msg;
+  if(pct>=0.9){ grade=UI[lang].resultExcellent; msg=UI[lang].resultExcellentMsg; }
+  else if(pct>=0.6){ grade=UI[lang].resultGood; msg=UI[lang].resultGoodMsg; }
+  else { grade=UI[lang].resultKeep; msg=UI[lang].resultKeepMsg; }
+  document.querySelector('#s-results .hdr-title').textContent=UI[lang].resultsTitle;
+  document.querySelector('#s-results .hdr-sub').textContent=UI[lang].resultsSub;
+  document.querySelector('#s-results .result-eyebrow').textContent=UI[lang].resultsEyebrow;
+  document.querySelector('#s-results .weak-title').textContent=UI[lang].weakTitle;
+  document.getElementById('miss-title').textContent=UI[lang].missTitle;
+  document.querySelectorAll('#s-results .result-btns .btn')[0].textContent=UI[lang].restart;
+  document.querySelectorAll('#s-results .result-btns .btn')[1].textContent=UI[lang].home;
+  document.getElementById('result-grade').textContent=grade;
+  document.getElementById('result-msg').textContent=msg;
+  const wkUniq=[...new Set(examWeak)];
+  const wc=document.getElementById('weak-card');
+  const missCard=document.getElementById('miss-card');
+  const missed=curMode==='krik' ? krikWrong : curMode==='exam' ? examWrong : [];
+  if(wkUniq.length&&curMode==='exam'){
+    document.getElementById('weak-list').innerHTML=wkUniq.map(c=>`<div class="weak-item">${getCategoryLabel(c)}</div>`).join('');
+    wc.style.display='block';
+  } else wc.style.display='none';
+  if(missed.length){
+    document.getElementById('miss-list').innerHTML=missed.map(item=>`
+      <div class="miss-item">
+        <div class="miss-q">${getQuestionText(item.q)}</div>
+        <div class="miss-a">${UI[lang].correctAnswerLabel} ${item.answer}</div>
+      </div>
+    `).join('');
+    missCard.style.display='block';
+  } else {
+    document.getElementById('miss-list').innerHTML='';
+    missCard.style.display='none';
+  }
+  // Speak result only if audio on
+  if(audioEnabled) speakText(grade+' '+msg, 'result', ()=>{});
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.onload=()=>{
+  buildStates();
+  updateStaticUI();
+  updateAllAudioBtns();
+  setLang(lang);
+};
+</script>
+</body>
+</html>
